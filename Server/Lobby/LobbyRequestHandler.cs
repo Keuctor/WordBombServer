@@ -202,7 +202,7 @@ namespace WordBombServer.Server.Lobby
                         submitWordResponse.SenderId = peer.Id;
                         submitWordResponse.Word = guess.Substring(0, Math.Min(guess.Length, 50));
 
-                        short givenXP = 0;
+                        bool giveXp = false;
 
 
                         if (lobby.Mode == 2 && lobby.Properties.TargetLength != guess.Length)
@@ -238,7 +238,10 @@ namespace WordBombServer.Server.Lobby
                             if (guess.Length >= 6)
                                 player.Combo++;
 
-                            givenXP += (short)guess.Length;
+
+                            giveXp = true;
+
+
                             lobby.Properties.MatchedWords.Add(guess);
                             lobby.NextPlayer(true);
 
@@ -255,13 +258,56 @@ namespace WordBombServer.Server.Lobby
                             submitWordResponse.FailType = 1;
                             wordBomb.AddSuggestion(lobby.Language, guess);
                         }
-                        submitWordResponse.Id = lobby.Properties.MatchPlayers[lobby.Properties.CurrentPlayerIndex].Id;
 
+                        submitWordResponse.Id = lobby.Properties.MatchPlayers[lobby.Properties.CurrentPlayerIndex].Id;
 
                         if (wordBomb.LoggedInUsers.TryGetValue(peer.Id, out var name))
                         {
                             var user = wordBomb.UserContext.GetUser(name);
-                            var addedXP = givenXP;
+
+                            int addedXP = 0;
+                            if (giveXp)
+                            {
+                                var level = user.Experience / 100;
+                                if (level == 1 || level == 0)
+                                {
+                                    addedXP = 4 + guess.Length;
+                                }
+                                else if (level == 2)
+                                {
+                                    addedXP = 3 + guess.Length;
+                                }
+                                else if (level == 3)
+                                {
+                                    addedXP = 2 + guess.Length;
+                                }
+                                else if (level == 4 || level == 5 || level == 6)
+                                {
+                                    addedXP = 6;
+                                }
+                                else if (level == 7 || level == 8 || level == 9)
+                                {
+                                    addedXP = 5;
+                                }
+                                else if (level == 10 || level == 11 || level == 12)
+                                {
+                                    addedXP = 4;
+                                }
+                                else if (level == 13 || level == 14 || level == 15)
+                                {
+                                    addedXP = 3;
+                                }
+                                else if (level == 16 || level == 17 || level == 18)
+                                {
+                                    addedXP = 2;
+                                }
+                                else
+                                {
+                                    addedXP = 1;
+                                }
+                            }
+
+
                             var addCoin = guess.Length * player.Combo;
                             var addedEmerald = player.Emerald;
                             player.Emerald = 0;
@@ -275,9 +321,8 @@ namespace WordBombServer.Server.Lobby
                                 Id = peer.Id,
                                 Coin = (byte)addCoin,
                                 Emerald = addedEmerald,
-                                XP = addedXP
+                                XP = (short)addedXP
                             };
-
                             foreach (var p in lobby.Players)
                             {
                                 wordBomb.SendPacket(p.Peer, submitWordResponse);
@@ -511,7 +556,7 @@ namespace WordBombServer.Server.Lobby
             return (lobby.Players.TrueForAll(t => t.GameLoaded));
         }
 
-        int Remap(int source, int sourceFrom, int sourceTo, int targetFrom, int targetTo)
+        public static int Remap(int source, int sourceFrom, int sourceTo, int targetFrom, int targetTo)
         {
             return targetFrom + (source - sourceFrom) * (targetTo - targetFrom) / (sourceTo - sourceFrom);
         }
@@ -907,6 +952,7 @@ namespace WordBombServer.Server.Lobby
                         Peer = peer,
                         RoomCode = lobby.Code,
                         UserName = userData.DisplayName,
+                        IsMobile = joinRoom.IsMobile,
                     };
 
                     lobby.Players.Add(player);
@@ -964,6 +1010,7 @@ namespace WordBombServer.Server.Lobby
                                 Peer = peer,
                                 UserName = userData.DisplayName,
                                 CrownCount = userData.WinCount,
+                                IsMobile = request.IsMobile
                             }
                         }
                     };

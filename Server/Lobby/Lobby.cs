@@ -52,6 +52,8 @@ namespace WordBombServer.Server.Lobby
         private static Random random = new Random();
 
         public MatchProperties Properties;
+        public int MinSpeed = 4;
+
 
         public Lobby(string name)
         {
@@ -60,6 +62,7 @@ namespace WordBombServer.Server.Lobby
             this.Name = name;
             Properties = new MatchProperties();
         }
+
 
         public MatchProperties StartMatch()
         {
@@ -74,6 +77,24 @@ namespace WordBombServer.Server.Lobby
             this.Properties.MatchedWords.Clear();
             SpeedUpCounter = 6;
             Round = 1;
+
+            if (this.Speed == 0)
+            {
+                MinSpeed = 7;
+            }
+            else if (this.Speed == 1)
+            {
+                MinSpeed = 6;
+            }
+            else if (this.Speed == 2)
+            {
+                MinSpeed = 5;
+            }
+
+            if (Players.Any(t => t.IsMobile))
+            {
+                MinSpeed++;
+            }
 
             foreach (var p in this.Players)
             {
@@ -91,7 +112,7 @@ namespace WordBombServer.Server.Lobby
             {
                 if (SpeedUpCounter == 0)
                 {
-                    if (Properties.CurrentMaxTime > 4)
+                    if (Properties.CurrentMaxTime > MinSpeed)
                     {
                         Properties.CurrentMaxTime--;
                     }
@@ -101,7 +122,7 @@ namespace WordBombServer.Server.Lobby
             }
             else
             {
-                if (Properties.CurrentMaxTime < 6)
+                if (Properties.CurrentMaxTime < 7)
                 {
                     Properties.CurrentMaxTime++;
                     SpeedUpCounter = 4;
@@ -112,7 +133,8 @@ namespace WordBombServer.Server.Lobby
             do
             {
                 Properties.CurrentPlayerIndex = (Properties.CurrentPlayerIndex + 1) % Properties.MatchPlayers.Count;
-                if (Properties.CurrentPlayerIndex == 0) {
+                if (Properties.CurrentPlayerIndex == 0)
+                {
                     Round++;
                 }
             }

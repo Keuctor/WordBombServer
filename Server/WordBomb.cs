@@ -236,7 +236,6 @@ namespace WordBombServer.Server
             if (!Startup.RequestTimer.AddType(request.GetType(), peer))
                 return;
 
-
             if (CanSuggest(request.Language, request.Word))
             {
                 lobbyRequestHandler.ErrorResponse(peer, "SUGGESTED_WORD_ADDED_FOR_VERIFY");
@@ -250,7 +249,6 @@ namespace WordBombServer.Server
 
         public bool CanSuggest(byte language, string word)
         {
-
             if (string.IsNullOrEmpty(word))
                 return false;
 
@@ -263,7 +261,6 @@ namespace WordBombServer.Server
             return true;
         }
 
-
         public void AddSuggestion(byte language, string word)
         {
             if (CanSuggest(language, word))
@@ -271,7 +268,6 @@ namespace WordBombServer.Server
                 WordProvider.WriteSuggestion(language, word);
             }
         }
-
 
         public void SendPacket<T>(NetPeer peer, T packet) where T : class, new()
         {

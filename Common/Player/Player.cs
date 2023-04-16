@@ -20,6 +20,7 @@ namespace WordBombServer.Common
         public NetPeer Peer { get; set; }
         public bool GameLoaded { get; set; }
         public bool IsDead { get; set; }
+        public bool IsMobile { get; set; }
 
         public Player()
         {
@@ -29,6 +30,7 @@ namespace WordBombServer.Common
             Level = 0;
             Combo = 1;
             GameLoaded = false;
+            IsMobile = false;
         }
         public void Deserialize(NetDataReader reader)
         {

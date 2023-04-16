@@ -8,5 +8,6 @@ namespace WordBombServer.Common.Packets.Request
         public byte GameLanguage { get; set; }
         public byte GameSpeed { get; set; }
         public bool IsPrivate { get; set; }
+        public bool IsMobile { get; set; }
     }
 }
