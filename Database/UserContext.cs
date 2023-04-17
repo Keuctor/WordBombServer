@@ -1,6 +1,4 @@
-﻿
-
-using System.Linq;
+﻿using System.Linq;
 using System.Text.Json.Serialization;
 
 namespace WordBombServer.Database
@@ -46,6 +44,7 @@ namespace WordBombServer.Database
             }
             return null;
         }
+
 
         public bool HasUser(string name)
         {

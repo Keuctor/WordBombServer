@@ -37,6 +37,7 @@ namespace WordBombServer.Server
             timeOutList.Add(typeof(UpdateDisplayNameRequest), 2000);
             timeOutList.Add(typeof(UpdatePlayerInfoRequest), 1000);
             timeOutList.Add(typeof(GameStartRequest), 5000);
+            timeOutList.Add(typeof(LogoutRequest), 2000);
         }
         public bool AddType(Type type, NetPeer peer)
         {

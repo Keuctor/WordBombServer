@@ -11,7 +11,6 @@ namespace WordBombServer.Database
         public uint Id { get; set; }
         public string Name { get; set; }
         public string DisplayName { get; set; }
-        public int Tag { get; set; }
         public string Password { get; set; }
         public short AvatarID { get; set; }
         public int Experience { get; set; }

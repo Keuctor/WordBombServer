@@ -47,9 +47,25 @@ namespace WordBombServer.Server
             _netPacketProcessor.SubscribeReusable<LoginRequest, NetPeer>(LoginUser);
             _netPacketProcessor.SubscribeReusable<UpdateDisplayNameRequest, NetPeer>(UpdatePlayer);
             _netPacketProcessor.SubscribeReusable<CheatCodeRequest, NetPeer>(EnterCheatCode);
+            _netPacketProcessor.SubscribeReusable<LogoutRequest, NetPeer>(LogoutUser);
 
             _netManager = new NetManager(this);
         }
+
+        private void LogoutUser(LogoutRequest request, NetPeer peer)
+        {
+            if (!Startup.RequestTimer.AddType(request.GetType(), peer))
+                return;
+            if (LoggedInUsers.TryGetValue(peer.Id, out var userName))
+            {
+                LoggedInUsers.Remove(peer.Id);
+                SendPacket(peer, new LogoutResponse());
+            }
+            else { 
+              lobbyRequestHandler.ErrorResponse(peer, "NOT_LOGGED_IN");
+            }
+        }
+
         private void EnterCheatCode(CheatCodeRequest request, NetPeer peer)
         {
             if (!Startup.RequestTimer.AddType(request.GetType(), peer))
@@ -59,31 +75,27 @@ namespace WordBombServer.Server
             {
                 var user = UserContext.GetUser(userName);
 
-                switch (request.Code.ToUpper())
+                var code = request.Code.ToUpper();
+                if (BonusCodes.Codes.Contains(code))
                 {
-                    case "AXSDA":
-                    case "KEUNEULL":
-                    case "BUSRA":
-                    case "WORDBOMB":
-                    case "DISTOPIA":
-                            if (UseCodeContext.UseCode(user.Id, request.Code.ToUpper()))
-                            {
-                                user.EmeraldCount += 50;
-                                SendPacket(peer, new UpdateUserData()
-                                {
-                                    Id = peer.Id,
-                                    Emerald = 50,
-                                });
-                                lobbyRequestHandler.ErrorResponse(peer, "CODE_USED");
-                            }
-                            else
-                            {
-                                lobbyRequestHandler.ErrorResponse(peer, "ALREADY_USED_CODE");
-                            }
-                        break;
-                    default:
-                        lobbyRequestHandler.ErrorResponse(peer, "CODE_NOT_EXIST");
-                        break;
+                    if (UseCodeContext.UseCode(user.Id, code))
+                    {
+                        user.EmeraldCount += 50;
+                        SendPacket(peer, new UpdateUserData()
+                        {
+                            Id = peer.Id,
+                            Emerald = 50,
+                        });
+                        lobbyRequestHandler.ErrorResponse(peer, "CODE_USED");
+                    }
+                    else
+                    {
+                        lobbyRequestHandler.ErrorResponse(peer, "ALREADY_USED_CODE");
+                    }
+                }
+                else
+                {
+                    lobbyRequestHandler.ErrorResponse(peer, "CODE_NOT_EXIST");
                 }
             }
         }
@@ -187,7 +199,6 @@ namespace WordBombServer.Server
         {
             if (!Startup.RequestTimer.AddType(request.GetType(), peer))
                 return;
-
 
             if (UserContext.HasUser(request.UserName))
             {
