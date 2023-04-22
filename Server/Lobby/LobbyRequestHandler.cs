@@ -205,6 +205,16 @@ namespace WordBombServer.Server.Lobby
                         bool giveXp = false;
 
 
+                        if (lobby.Mode == 1 && !guess.StartsWith(lobby.Properties.TargetWord))
+                        {
+                            if (player.EmeraldCounter > 0)
+                            {
+                                player.EmeraldCounter--;
+                            }
+                            player.Combo = 1;
+                            submitWordResponse.FailType = 1;
+                        }
+                        else
                         if (lobby.Mode == 2 && lobby.Properties.TargetLength != guess.Length)
                         {
                             if (player.EmeraldCounter > 0)
@@ -492,7 +502,7 @@ namespace WordBombServer.Server.Lobby
                     if (!string.IsNullOrEmpty(lobby.LastSentText))
                     {
                         var lastText = lobby.LastSentText;
-                        lastText = lastText.Substring(Math.Max(0, lastText.Length - 2));
+                        lastText = new string(lastText[lastText.Length-1],1);
                         if (lastText.Contains("Ğ") || lastText.Contains("J"))
                         {
                             lastText = wordBomb.WordProvider.GetRandomWordPart(2, lobby.Language);
@@ -532,6 +542,14 @@ namespace WordBombServer.Server.Lobby
                         if (p != null)
                         {
                             p.GameLoaded = true;
+                            
+                            foreach (var lp in lobby.Players)
+                            {
+                                wordBomb.SendPacket(lp.Peer, new PlayerLoadedResponse() { 
+                                    LoadedPlayerCount  = (byte)lobby.Players.Count,
+                                    TotalPlayer = (byte)lobby.Players.Count(t=>t.GameLoaded)
+                                });
+                            }
                         }
                         else
                         {

@@ -80,15 +80,15 @@ namespace WordBombServer.Server.Lobby
 
             if (this.Speed == 0)
             {
-                MinSpeed = 7;
+                MinSpeed = 6;
             }
             else if (this.Speed == 1)
             {
-                MinSpeed = 6;
+                MinSpeed = 5;
             }
             else if (this.Speed == 2)
             {
-                MinSpeed = 5;
+                MinSpeed = 4;
             }
 
             if (Players.Any(t => t.IsMobile))
