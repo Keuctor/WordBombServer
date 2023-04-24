@@ -1,10 +1,5 @@
 ﻿using LiteNetLib;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 using WordBombServer.Common.Packets.Request;
 
 namespace WordBombServer.Server
@@ -28,7 +23,7 @@ namespace WordBombServer.Server
             timeOutList.Add(typeof(KickPlayerRequest), 4000);
             timeOutList.Add(typeof(LeaderboardRequest), 2000);
             timeOutList.Add(typeof(LeaveRoomRequest), 2000);
-            timeOutList.Add(typeof(LoginRequest), 10000);
+            timeOutList.Add(typeof(LoginRequest), 3000);
             timeOutList.Add(typeof(QuickGameRequest), 2000);
             timeOutList.Add(typeof(GiftPlayerRequest), 1000);
             timeOutList.Add(typeof(RegisterRequest), 60000);

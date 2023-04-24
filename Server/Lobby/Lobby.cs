@@ -1,5 +1,6 @@
 ﻿
 using LiteNetLib;
+using System.Diagnostics;
 using System.Net;
 using WordBombServer.Common;
 using WordBombServer.Common.Packets.Response;
@@ -39,6 +40,7 @@ namespace WordBombServer.Server.Lobby
         public List<IPAddress> KickedPlayerList = new List<IPAddress>();
         public bool IsPrivate { get; set; }
         public NetPeer Host { get; set; }
+        public bool Solo { get; set; }
 
         public List<Player> Players = new List<Player>(8);
 
@@ -67,6 +69,7 @@ namespace WordBombServer.Server.Lobby
         public MatchProperties StartMatch()
         {
             this.Properties.MatchPlayers = Players.OrderBy(t => Guid.NewGuid()).ToList();
+            this.Solo = this.Properties.MatchPlayers.Count == 1;
             this.Properties.MatchWord = "";
             this.Properties.CurrentPlayerIndex = 0;
             var at = this.Mode == 2 ? 4 : 0;
@@ -94,6 +97,10 @@ namespace WordBombServer.Server.Lobby
             if (Players.Any(t => t.IsMobile))
             {
                 MinSpeed++;
+            }
+
+            if (Solo) {
+                MinSpeed--;
             }
 
             foreach (var p in this.Players)
@@ -146,7 +153,9 @@ namespace WordBombServer.Server.Lobby
             if (Properties.CountDown == 0)
             {
                 Properties.Time -= 0.25f;
-                if (Properties.MatchPlayers.Count(t => !t.IsDead) <= 1)
+                
+                if (Solo && Properties.MatchPlayers.TrueForAll(t => t.IsDead) ||
+                    (!Solo && Properties.MatchPlayers.Count(t => !t.IsDead) <= 1))
                 {
                     Properties.MatchEnded = true;
                     return;

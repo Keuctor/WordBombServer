@@ -248,9 +248,7 @@ namespace WordBombServer.Server.Lobby
                             if (guess.Length >= 6)
                                 player.Combo++;
 
-
                             giveXp = true;
-
 
                             lobby.Properties.MatchedWords.Add(guess);
                             lobby.NextPlayer(true);
@@ -271,73 +269,89 @@ namespace WordBombServer.Server.Lobby
 
                         submitWordResponse.Id = lobby.Properties.MatchPlayers[lobby.Properties.CurrentPlayerIndex].Id;
 
-                        if (wordBomb.LoggedInUsers.TryGetValue(peer.Id, out var name))
+                        if (submitWordResponse.FailType == 0)
                         {
-                            var user = wordBomb.UserContext.GetUser(name);
-
-                            int addedXP = 0;
-                            if (giveXp)
+                            if (wordBomb.LoggedInUsers.TryGetValue(peer.Id, out var name))
                             {
-                                var level = user.Experience / 100;
-                                if (level == 1 || level == 0)
+                                var user = wordBomb.UserContext.GetUser(name);
+
+                                int addedXP = 0;
+                                if (giveXp)
                                 {
-                                    addedXP = 4 + guess.Length;
+                                    var level = user.Experience / 100;
+                                    if (level == 1 || level == 0)
+                                    {
+                                        addedXP = 4 + guess.Length;
+                                    }
+                                    else if (level == 2)
+                                    {
+                                        addedXP = 3 + guess.Length;
+                                    }
+                                    else if (level == 3)
+                                    {
+                                        addedXP = 2 + guess.Length;
+                                    }
+                                    else if (level == 4 || level == 5 || level == 6)
+                                    {
+                                        addedXP = 6;
+                                    }
+                                    else if (level == 7 || level == 8 || level == 9)
+                                    {
+                                        addedXP = 5;
+                                    }
+                                    else if (level == 10 || level == 11 || level == 12)
+                                    {
+                                        addedXP = 4;
+                                    }
+                                    else if (level == 13 || level == 14 || level == 15)
+                                    {
+                                        addedXP = 3;
+                                    }
+                                    else if (level == 16 || level == 17 || level == 18)
+                                    {
+                                        addedXP = 2;
+                                    }
+                                    else
+                                    {
+                                        addedXP = 1;
+                                    }
                                 }
-                                else if (level == 2)
+
+                                var addCoin = guess.Length * player.Combo;
+
+                                if (lobby.Solo)
                                 {
-                                    addedXP = 3 + guess.Length;
+                                    if (addCoin >= 2)
+                                    {
+                                        addCoin = addCoin / 2;
+                                    }
                                 }
-                                else if (level == 3)
+
+                                var addedEmerald = player.Emerald;
+                                player.Emerald = 0;
+
+                                user.Experience += addedXP;
+                                user.CoinCount += addCoin;
+                                user.EmeraldCount += addedEmerald;
+
+                                var updateUserData = new UpdateUserData()
                                 {
-                                    addedXP = 2 + guess.Length;
-                                }
-                                else if (level == 4 || level == 5 || level == 6)
+                                    Id = peer.Id,
+                                    Coin = (byte)addCoin,
+                                    Emerald = addedEmerald,
+                                    XP = (short)addedXP
+                                };
+
+                                foreach (var p in lobby.Players)
                                 {
-                                    addedXP = 6;
-                                }
-                                else if (level == 7 || level == 8 || level == 9)
-                                {
-                                    addedXP = 5;
-                                }
-                                else if (level == 10 || level == 11 || level == 12)
-                                {
-                                    addedXP = 4;
-                                }
-                                else if (level == 13 || level == 14 || level == 15)
-                                {
-                                    addedXP = 3;
-                                }
-                                else if (level == 16 || level == 17 || level == 18)
-                                {
-                                    addedXP = 2;
-                                }
-                                else
-                                {
-                                    addedXP = 1;
+                                    wordBomb.SendPacket(p.Peer, updateUserData);
                                 }
                             }
+                        }
 
-
-                            var addCoin = guess.Length * player.Combo;
-                            var addedEmerald = player.Emerald;
-                            player.Emerald = 0;
-
-                            user.Experience += addedXP;
-                            user.CoinCount += addCoin;
-                            user.EmeraldCount += addedEmerald;
-
-                            var updateUserData = new UpdateUserData()
-                            {
-                                Id = peer.Id,
-                                Coin = (byte)addCoin,
-                                Emerald = addedEmerald,
-                                XP = (short)addedXP
-                            };
-                            foreach (var p in lobby.Players)
-                            {
-                                wordBomb.SendPacket(p.Peer, submitWordResponse);
-                                wordBomb.SendPacket(p.Peer, updateUserData);
-                            }
+                        foreach (var p in lobby.Players)
+                        {
+                            wordBomb.SendPacket(p.Peer, submitWordResponse);
                         }
                     }
                     else
@@ -396,9 +410,19 @@ namespace WordBombServer.Server.Lobby
                     lobby.Properties.MatchStarted = false;
                     var matchWinnerResponse = new MatchWinnerResponse()
                     {
-                        Countdown = 10,
-                        Id = lobby.Properties.MatchPlayers.First(t => !t.IsDead).Id
+                        Countdown = 10
                     };
+
+                    if (lobby.Solo)
+                    {
+                        matchWinnerResponse.Id = lobby.Properties.MatchPlayers[0].Id;
+                    }
+                    else
+                    {
+                        matchWinnerResponse.Id = lobby.Properties.MatchPlayers.First(t => !t.IsDead).Id;
+                    }
+
+
                     if (wordBomb.LoggedInUsers.TryGetValue(matchWinnerResponse.Id, out var userName))
                     {
                         var userDta = wordBomb.UserContext.GetUser(userName);
@@ -407,6 +431,7 @@ namespace WordBombServer.Server.Lobby
                             userDta.WinCount++;
                         }
                     }
+
                     foreach (var p in lobby.Players)
                     {
                         p.IsDead = false;
@@ -419,7 +444,7 @@ namespace WordBombServer.Server.Lobby
                     return;
                 }
 
-                if (currentI != lobby.Properties.CurrentPlayerIndex)
+                if (currentI != lobby.Properties.CurrentPlayerIndex || lobby.Properties.Time <= 0)
                 {
                     lobby.Properties.MatchWord = "";
                     ChangeTurn(lobby, lobby.Properties.CurrentPlayerIndex, false);
@@ -455,7 +480,8 @@ namespace WordBombServer.Server.Lobby
         {
             var response = new EliminatePlayerResponse()
             {
-                Id = player.Id
+                Id = player.Id,
+                Reason = 0
             };
             foreach (var p in lobby.Players)
             {
@@ -502,7 +528,7 @@ namespace WordBombServer.Server.Lobby
                     if (!string.IsNullOrEmpty(lobby.LastSentText))
                     {
                         var lastText = lobby.LastSentText;
-                        lastText = new string(lastText[lastText.Length-1],1);
+                        lastText = new string(lastText[lastText.Length - 1], 1);
                         if (lastText.Contains("Ğ") || lastText.Contains("J"))
                         {
                             lastText = wordBomb.WordProvider.GetRandomWordPart(2, lobby.Language);
@@ -542,12 +568,13 @@ namespace WordBombServer.Server.Lobby
                         if (p != null)
                         {
                             p.GameLoaded = true;
-                            
+
                             foreach (var lp in lobby.Players)
                             {
-                                wordBomb.SendPacket(lp.Peer, new PlayerLoadedResponse() { 
-                                    LoadedPlayerCount  = (byte)lobby.Players.Count,
-                                    TotalPlayer = (byte)lobby.Players.Count(t=>t.GameLoaded)
+                                wordBomb.SendPacket(lp.Peer, new PlayerLoadedResponse()
+                                {
+                                    LoadedPlayerCount = (byte)lobby.Players.Count,
+                                    TotalPlayer = (byte)lobby.Players.Count(t => t.GameLoaded)
                                 });
                             }
                         }
@@ -620,7 +647,7 @@ namespace WordBombServer.Server.Lobby
             {
                 if (lobbies.TryGetValue(code, out Lobby lobby))
                 {
-                    if (lobby.Players.Count > 1)
+                    if (lobby.Players.Count > 0)
                     {
                         if (lobby.Host.Id == peer.Id)
                         {
@@ -895,6 +922,7 @@ namespace WordBombServer.Server.Lobby
                             var playerEliminated = new EliminatePlayerResponse()
                             {
                                 Id = inGamePlayer.Id,
+                                Reason = 1,
                             };
                             foreach (var pleft in playersInTheLobby)
                             {
