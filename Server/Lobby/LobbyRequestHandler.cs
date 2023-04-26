@@ -444,10 +444,10 @@ namespace WordBombServer.Server.Lobby
                     return;
                 }
 
-                if (currentI != lobby.Properties.CurrentPlayerIndex || lobby.Properties.Time <= 0)
+                if (currentI != lobby.Properties.CurrentPlayerIndex || (lobby.Solo && lobby.Properties.Time <= 0))
                 {
                     lobby.Properties.MatchWord = "";
-                    ChangeTurn(lobby, lobby.Properties.CurrentPlayerIndex, false);
+                    ChangeTurn(lobby, lobby.Properties.CurrentPlayerIndex, lobby.Solo);
                     DecreaseHealth(lobby, currentP);
                 }
             }
@@ -455,6 +455,7 @@ namespace WordBombServer.Server.Lobby
 
         public void DecreaseHealth(Lobby lobby, Player player)
         {
+            Console.WriteLine("decrease health " + lobby.Properties.PlayerHealths[player.Id]);
             byte prop = lobby.Properties.PlayerHealths[player.Id];
             prop--;
             if (prop <= 0)
@@ -699,7 +700,8 @@ namespace WordBombServer.Server.Lobby
                         var updateResponse = new UpdatePlayerInfoResponse()
                         {
                             Id = player.Id,
-                            AvatarId = player.AvatarId
+                            AvatarId = player.AvatarId,
+                            Experience = player.Experience,
                         };
                         foreach (var p in lobby.Players)
                         {
@@ -993,7 +995,7 @@ namespace WordBombServer.Server.Lobby
                     {
                         AvatarId = userData.AvatarID,
                         Id = peer.Id,
-                        Level = (short)(userData.Experience < 100 ? 1 : ((userData.Experience / 100) + 1)),
+                        Experience = userData.Experience,
                         CrownCount = userData.WinCount,
                         Peer = peer,
                         RoomCode = lobby.Code,
@@ -1052,7 +1054,7 @@ namespace WordBombServer.Server.Lobby
                             {
                                 AvatarId = userData.AvatarID,
                                 Id = peer.Id,
-                                Level = (short)(userData.Experience < 100 ? 1 : ((userData.Experience / 100) + 1)),
+                                Experience = userData.Experience,
                                 Peer = peer,
                                 UserName = userData.DisplayName,
                                 CrownCount = userData.WinCount,

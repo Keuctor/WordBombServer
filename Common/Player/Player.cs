@@ -1,6 +1,5 @@
 ﻿using LiteNetLib.Utils;
 using LiteNetLib;
-using System.Xml.Linq;
 
 namespace WordBombServer.Common
 {
@@ -16,30 +15,31 @@ namespace WordBombServer.Common
         public byte Combo { get; set; }
         public byte Emerald { get; set; }
         public byte EmeraldCounter { get; set; }
-        public short Level { get; set; }
         public NetPeer Peer { get; set; }
         public bool GameLoaded { get; set; }
         public bool IsDead { get; set; }
         public bool IsMobile { get; set; }
+        public float Experience { get; set; }
 
         public Player()
         {
             RoomCode = null;
             UserName = null;
             AvatarId = 0;
-            Level = 0;
             Combo = 1;
             GameLoaded = false;
             IsMobile = false;
+            Experience = 0;
         }
+
         public void Deserialize(NetDataReader reader)
         {
             Id = reader.GetInt();
             UserName = reader.GetString();
             AvatarId = reader.GetShort();
-            Level = reader.GetShort();
             GameLoaded = reader.GetBool();
             CrownCount = reader.GetInt();
+            Experience = reader.GetFloat();
         }
 
         public void Serialize(NetDataWriter writer)
@@ -47,9 +47,9 @@ namespace WordBombServer.Common
             writer.Put(Id);
             writer.Put(UserName);
             writer.Put(AvatarId);
-            writer.Put(Level);
             writer.Put(GameLoaded);
             writer.Put(CrownCount);
+            writer.Put(Experience);
         }
     }
 

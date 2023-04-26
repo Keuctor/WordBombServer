@@ -13,7 +13,7 @@ namespace WordBombServer.Database
         public string DisplayName { get; set; }
         public string Password { get; set; }
         public short AvatarID { get; set; }
-        public int Experience { get; set; }
+        public float Experience { get; set; }
         public short WinCount { get; set; }
         public int EmeraldCount { get; set; }
         public int CoinCount { get; set; }
