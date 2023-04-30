@@ -18,5 +18,4 @@ namespace WordBombServer.Database
         public int EmeraldCount { get; set; }
         public int CoinCount { get; set; }
     }
-
 }
