@@ -1,6 +1,7 @@
 ﻿using LiteNetLib;
 using LiteNetLib.Utils;
 using System.Globalization;
+using System.Security.Cryptography.X509Certificates;
 using WordBombServer.Common;
 using WordBombServer.Common.Packets.Request;
 using WordBombServer.Common.Packets.Response;
@@ -38,6 +39,8 @@ namespace WordBombServer.Server.Lobby
             processor.SubscribeReusable<UnlockAvatarRequest, NetPeer>(UnlockAvatar);
             processor.SubscribeReusable<LeaderboardRequest, NetPeer>(GetLeaderboard);
         }
+
+
 
         private void OnFailTimeout(Type obj, NetPeer peer)
         {
@@ -77,21 +80,53 @@ namespace WordBombServer.Server.Lobby
             if (!Startup.RequestTimer.AddType(request.GetType(), peer))
                 return;
 
+
             if (wordBomb.LoggedInUsers.TryGetValue(peer.Id, out var userName))
             {
                 var user = wordBomb.UserContext.GetUser(userName);
-                if (user.EmeraldCount >= request.Price)
+
+                if (user.UnlockedAvatars == null)
                 {
-                    user.EmeraldCount -= request.Price;
+                    user.UnlockedAvatars = string.Empty;
+                }
+
+                var unlockedAvatars = user.UnlockedAvatars.Split(",");
+
+                var boxes = wordBomb.AvatarBoxes.Avatars;
+                var targetBox = boxes.FirstOrDefault(t => t.Id == request.Id);
+
+                if (targetBox == null)
+                {
+                    Console.WriteLine($"Error while unlocking avatar. targetBox is null");
+                    ErrorResponse(peer, "ERROR_WHILE_UNLOCK");
+                    return;
+                }
+
+                var unlockableAvatars = targetBox.Contents.Except(unlockedAvatars).ToList();
+
+                if (unlockableAvatars.Count == 0)
+                {
+                    ErrorResponse(peer, "BOX_YOUVE_UNLOCKED_EVERYTHING");
+                    return;
+                }
+
+
+                if (user.EmeraldCount >= targetBox.Price)
+                {
+                    user.EmeraldCount -= targetBox.Price;
+
+                    string unlockedAvatar = unlockableAvatars.OrderBy(t => Guid.NewGuid()).ToArray()[0];
+                    user.UnlockedAvatars += $",{unlockedAvatar}";
                     var response = new UnlockAvatarResponse()
                     {
-                        EmeraldCount = user.EmeraldCount
+                        EmeraldCount = user.EmeraldCount,
+                        UnlockedAvatar = unlockedAvatar
                     };
                     wordBomb.SendPacket(peer, response);
                 }
                 else
                 {
-                    wordBomb.lobbyRequestHandler.ErrorResponse(peer, "NOT_ENOUGH_EMERALD");
+                    ErrorResponse(peer, "NOT_ENOUGH_EMERALD");
                 }
             }
         }

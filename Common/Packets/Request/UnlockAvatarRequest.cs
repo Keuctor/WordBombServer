@@ -8,6 +8,6 @@ namespace WordBombServer.Common.Packets.Request
 {
     public class UnlockAvatarRequest
     {
-        public byte Price { get; set; }
+        public short Id { get; set; }
     }
 }

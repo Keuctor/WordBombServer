@@ -6,6 +6,12 @@ using System.Threading.Tasks;
 
 namespace WordBombServer.Database
 {
+    public class UserUsedCode
+    {
+        public uint Id { get; set; }
+        public string UsedCode { get; set; }
+    }
+
     public class UsedCodeContextData
     {
         public List<UserUsedCode> Users = new List<UserUsedCode>();

@@ -17,5 +17,6 @@ namespace WordBombServer.Database
         public short WinCount { get; set; }
         public int EmeraldCount { get; set; }
         public int CoinCount { get; set; }
+        public string UnlockedAvatars { get; set; }
     }
 }

@@ -31,12 +31,15 @@ namespace WordBombServer.Server
         public UserContext UserContext;
         public UserCodeContext UseCodeContext;
 
+        public AvatarBoxes AvatarBoxes { get; set; }
+
         public WordBomb(int maxConnection, int port)
         {
             UseCodeContext = new UserCodeContext();
             UserContext = new UserContext();
             WordProvider = new WordProvider();
             WordProvider.LoadWords();
+            AvatarBoxes = new AvatarBoxes();
 
             this.MaxConnection = maxConnection;
             this.Port = port;
@@ -61,8 +64,9 @@ namespace WordBombServer.Server
                 LoggedInUsers.Remove(peer.Id);
                 SendPacket(peer, new LogoutResponse());
             }
-            else { 
-              lobbyRequestHandler.ErrorResponse(peer, "NOT_LOGGED_IN");
+            else
+            {
+                lobbyRequestHandler.ErrorResponse(peer, "NOT_LOGGED_IN");
             }
         }
 
@@ -160,6 +164,7 @@ namespace WordBombServer.Server
             }
 
             var user = UserContext.GetUser(request.UserName);
+            
             if (user.Password == request.Password)
             {
                 var response = new LoginResponse()
@@ -170,8 +175,13 @@ namespace WordBombServer.Server
                     EmeraldCount = user.EmeraldCount,
                     Experience = user.Experience,
                     UserName = user.Name,
-                    DisplayName = user.DisplayName
+                    DisplayName = user.DisplayName,
+                    UnlockedAvatars = user.UnlockedAvatars
                 };
+                if (response.UnlockedAvatars == null)
+                {
+                    response.UnlockedAvatars = string.Empty;
+                }
                 UserLogin(response, peer);
             }
             else
@@ -224,6 +234,7 @@ namespace WordBombServer.Server
                 WinCount = 0,
                 EmeraldCount = 0,
                 CoinCount = 0,
+                UnlockedAvatars = string.Empty
             };
 
             UserContext.AddUser(user);
@@ -236,7 +247,8 @@ namespace WordBombServer.Server
                 EmeraldCount = user.EmeraldCount,
                 Experience = user.Experience,
                 UserName = user.Name,
-                DisplayName = user.DisplayName
+                DisplayName = user.DisplayName,
+                UnlockedAvatars = user.UnlockedAvatars
             };
 
             UserLogin(response, peer);
