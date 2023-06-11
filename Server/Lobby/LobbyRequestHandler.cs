@@ -574,8 +574,8 @@ namespace WordBombServer.Server.Lobby
                             {
                                 wordBomb.SendPacket(lp.Peer, new PlayerLoadedResponse()
                                 {
-                                    LoadedPlayerCount = (byte)lobby.Players.Count,
-                                    TotalPlayer = (byte)lobby.Players.Count(t => t.GameLoaded)
+                                    LoadedPlayerCount = (byte)lobby.Players.Count(t => t.GameLoaded),
+                                    TotalPlayer = (byte)lobby.Players.Count
                                 });
                             }
                         }
