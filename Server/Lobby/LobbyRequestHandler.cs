@@ -38,9 +38,54 @@ namespace WordBombServer.Server.Lobby
             processor.SubscribeReusable<QuickGameRequest, NetPeer>(QuickLobby);
             processor.SubscribeReusable<UnlockAvatarRequest, NetPeer>(UnlockAvatar);
             processor.SubscribeReusable<LeaderboardRequest, NetPeer>(GetLeaderboard);
+            processor.SubscribeReusable<SetPerkRequest, NetPeer>(SetSelectedPerk);
         }
 
+        private void SetSelectedPerk(SetPerkRequest request, NetPeer peer)
+        {
+            var perk = wordBomb.PerkManager.GetPerk(request.SelectedPerkId);
+            if (perk == null)
+            {
+                ErrorResponse(peer, "NULL_PERK");
+            }
 
+            var price = perk.Price;
+
+            if (wordBomb.LoggedInUsers.TryGetValue(peer.Id, out var userName))
+            {
+                var user = wordBomb.UserContext.GetUser(userName);
+                if (user.EmeraldCount >= price)
+                {
+                    user.EmeraldCount -= price;
+
+                    if (playersInLobbies.TryGetValue(peer.Id, out string code))
+                    {
+                        if (lobbies.TryGetValue(code, out Lobby lobby))
+                        {
+                            var targetPlayer = lobby.Players.FirstOrDefault(t => t.UserName == userName);
+                            if (targetPlayer != null)
+                            {
+                                targetPlayer.SelectedGamePerkId = perk.Id;
+                            }
+                            else
+                            {
+                                Console.WriteLine("Error: Can't find player for perk selection.");
+                                ErrorResponse(peer, "SOMETHING_WENT_WRONG");
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    ErrorResponse(peer, "NOT_ENOUGH_EMERALD");
+                }
+            }
+            else
+            {
+                ErrorResponse(peer, "ERROR_NOT_LOGGED_IN");
+            }
+
+        }
 
         private void OnFailTimeout(Type obj, NetPeer peer)
         {

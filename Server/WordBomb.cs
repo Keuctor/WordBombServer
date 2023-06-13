@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using WordBombServer.Common;
 using WordBombServer.Common.Packets.Request;
 using WordBombServer.Common.Packets.Response;
+using WordBombServer.Common.Perk;
 using WordBombServer.Database;
 using WordBombServer.Server.Lobby;
 
@@ -30,6 +31,7 @@ namespace WordBombServer.Server
         public WordProvider WordProvider;
         public UserContext UserContext;
         public UserCodeContext UseCodeContext;
+        public PerkManager PerkManager;
 
         public AvatarBoxes AvatarBoxes { get; set; }
 
@@ -37,8 +39,10 @@ namespace WordBombServer.Server
         {
             UseCodeContext = new UserCodeContext();
             UserContext = new UserContext();
+            
             WordProvider = new WordProvider();
             WordProvider.LoadWords();
+            PerkManager = new PerkManager();
             AvatarBoxes = new AvatarBoxes();
 
             this.MaxConnection = maxConnection;
@@ -53,6 +57,8 @@ namespace WordBombServer.Server
             _netPacketProcessor.SubscribeReusable<LogoutRequest, NetPeer>(LogoutUser);
 
             _netManager = new NetManager(this);
+
+            Console.WriteLine("Üye sayısı: " + UserContext.Users.Count);
         }
 
         private void LogoutUser(LogoutRequest request, NetPeer peer)
@@ -164,7 +170,7 @@ namespace WordBombServer.Server
             }
 
             var user = UserContext.GetUser(request.UserName);
-            
+
             if (user.Password == request.Password)
             {
                 var response = new LoginResponse()

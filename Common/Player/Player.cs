@@ -20,9 +20,10 @@ namespace WordBombServer.Common
         public bool IsDead { get; set; }
         public bool IsMobile { get; set; }
         public float Experience { get; set; }
-
+        public int SelectedGamePerkId { get; set; }
         public Player()
         {
+            SelectedGamePerkId = 0;
             RoomCode = null;
             UserName = null;
             AvatarId = 0;
