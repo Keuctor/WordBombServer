@@ -120,11 +120,48 @@ namespace WordBombServer.Server.Lobby
             }
         }
 
+        public string UnlockRandomAvatar(NetPeer peer)
+        {
+            if (wordBomb.LoggedInUsers.TryGetValue(peer.Id, out var userName))
+            {
+                var user = wordBomb.UserContext.GetUser(userName);
+
+                if (user.UnlockedAvatars == null)
+                {
+                    user.UnlockedAvatars = string.Empty;
+                }
+
+                var unlockedAvatars = user.UnlockedAvatars.Split(",");
+
+                var boxes = wordBomb.AvatarBoxes.Avatars;
+                var targetBox = boxes.OrderBy(t => Guid.NewGuid()).ToList()[0];
+
+                if (targetBox == null)
+                {
+                    Console.WriteLine($"Error while unlocking avatar. targetBox is null");
+                    ErrorResponse(peer, "ERROR_WHILE_UNLOCK");
+                    return null;
+                }
+
+                var unlockableAvatars = targetBox.Contents.Except(unlockedAvatars).ToList();
+
+                if (unlockableAvatars.Count == 0)
+                {
+                    ErrorResponse(peer, "BOX_YOUVE_UNLOCKED_EVERYTHING");
+                    return null;
+                }
+
+                string unlockedAvatar = unlockableAvatars.OrderBy(t => Guid.NewGuid()).ToArray()[0];
+                user.UnlockedAvatars += $",{unlockedAvatar}";
+                return unlockedAvatar;
+            }
+            return null;
+        }
+
         private void UnlockAvatar(UnlockAvatarRequest request, NetPeer peer)
         {
             if (!Startup.RequestTimer.AddType(request.GetType(), peer))
                 return;
-
 
             if (wordBomb.LoggedInUsers.TryGetValue(peer.Id, out var userName))
             {

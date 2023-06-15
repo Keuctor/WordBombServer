@@ -32,6 +32,7 @@ namespace WordBombServer.Server
         public UserContext UserContext;
         public UserCodeContext UseCodeContext;
         public PerkManager PerkManager;
+        public UserStatsContext UserStats;
 
         public AvatarBoxes AvatarBoxes { get; set; }
 
@@ -39,7 +40,9 @@ namespace WordBombServer.Server
         {
             UseCodeContext = new UserCodeContext();
             UserContext = new UserContext();
-            
+            UserStats = new UserStatsContext();
+
+
             WordProvider = new WordProvider();
             WordProvider.LoadWords();
             PerkManager = new PerkManager();
@@ -182,7 +185,9 @@ namespace WordBombServer.Server
                     Experience = user.Experience,
                     UserName = user.Name,
                     DisplayName = user.DisplayName,
-                    UnlockedAvatars = user.UnlockedAvatars
+                    UnlockedAvatars = user.UnlockedAvatars,
+                    ClaimDay = 0,
+                    UnlockAvatar = "",
                 };
                 if (response.UnlockedAvatars == null)
                 {
@@ -208,6 +213,50 @@ namespace WordBombServer.Server
             }
 
             LoggedInUsers.Add(peer.Id, response.UserName);
+
+            string pattern = "MM-dd-yy";
+
+            var user = UserContext.GetUser(response.UserName);
+            var stat = UserStats.GetOrCreatePlayerStat(user.Id);
+
+            var dateTimeNow = DateTime.Now; //for testing
+
+
+            if (DateTime.TryParseExact(stat.LastLogin, pattern, null, System.Globalization.DateTimeStyles.None,
+                out var parsedDateTime))
+            {
+                if (parsedDateTime.Day != dateTimeNow.Day)
+                {
+                    if (stat.Day <= 6)
+                    {
+                        user.EmeraldCount += UserStats.Bonuses[stat.Day].Emerald;
+                        if (UserStats.Bonuses[stat.Day].Chest)
+                        {
+                            var unlockedAvatar = lobbyRequestHandler.UnlockRandomAvatar(peer);
+                            if (unlockedAvatar != null)
+                            {
+                                response.UnlockAvatar = unlockedAvatar;
+                            }
+                        }
+                        response.ClaimDay = stat.Day;
+                    }
+                    stat.Day++;
+                }
+                else
+                {
+                    if (stat.Day == 0)
+                    {
+                        //First time user
+                        stat.Day = 1;
+                        response.ClaimDay = 1;
+                        user.EmeraldCount += UserStats.Bonuses[0].Emerald;
+                    }
+                }
+            }
+
+            response.EmeraldCount = user.EmeraldCount;
+            stat.LastLogin = dateTimeNow.ToString(pattern);
+            UserStats.SaveChanges();
             SendPacket(peer, response);
         }
 
@@ -254,7 +303,9 @@ namespace WordBombServer.Server
                 Experience = user.Experience,
                 UserName = user.Name,
                 DisplayName = user.DisplayName,
-                UnlockedAvatars = user.UnlockedAvatars
+                UnlockedAvatars = user.UnlockedAvatars,
+                ClaimDay = 0,
+                UnlockAvatar = ""
             };
 
             UserLogin(response, peer);

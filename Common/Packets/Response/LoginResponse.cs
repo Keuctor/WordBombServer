@@ -12,6 +12,8 @@ namespace WordBombServer.Common.Packets.Response
         public float Experience { get; set; }
         public short AvatarId { get; set; }
         public string UnlockedAvatars { get; set; }
+        public short ClaimDay { get; set; }
+        public string UnlockAvatar { get; set; }
     }
 }
 
