@@ -238,9 +238,9 @@ namespace WordBombServer.Server
                                 response.UnlockAvatar = unlockedAvatar;
                             }
                         }
+                        stat.Day++;
                         response.ClaimDay = stat.Day;
                     }
-                    stat.Day++;
                 }
                 else
                 {
@@ -343,10 +343,12 @@ namespace WordBombServer.Server
 
         public void AddSuggestion(byte language, string word)
         {
+            /*
             if (CanSuggest(language, word))
             {
                 WordProvider.WriteSuggestion(language, word);
             }
+            */
         }
 
         public void SendPacket<T>(NetPeer peer, T packet) where T : class, new()

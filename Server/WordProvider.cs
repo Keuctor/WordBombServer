@@ -42,7 +42,6 @@ namespace WordBombServer.Server
                 {
                     words_tr_suggested.Add(suggest.Word);
                 }
-                Console.WriteLine($"Suggestion Added {suggest.Language}:{suggest.Word}");
             }
 
             Console.WriteLine("TR total:" + (words_tr.Count + words_tr_suggested.Count));

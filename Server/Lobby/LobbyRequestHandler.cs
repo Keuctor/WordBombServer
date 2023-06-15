@@ -572,7 +572,6 @@ namespace WordBombServer.Server.Lobby
 
         public void DecreaseHealth(Lobby lobby, Player player)
         {
-            Console.WriteLine("decrease health " + lobby.Properties.PlayerHealths[player.Id]);
             byte prop = lobby.Properties.PlayerHealths[player.Id];
             prop--;
             if (prop <= 0)

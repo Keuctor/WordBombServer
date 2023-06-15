@@ -62,7 +62,7 @@ namespace WordBombServer.Server
     public class GreekGodsBox : AvatarBox
     {
         public override string Name => "Greek Gods";
-        public override short Price => 20;
+        public override short Price => 30;
 
         public override short Id => 3;
 
@@ -103,7 +103,7 @@ namespace WordBombServer.Server
     public class VarientsBox : AvatarBox
     {
         public override string Name => "Varients";
-        public override short Price => 10;
+        public override short Price => 20;
 
         public override short Id => 6;
 
