@@ -23,10 +23,10 @@ namespace WordBombServer.Server
             timeOutList.Add(typeof(KickPlayerRequest), 4000);
             timeOutList.Add(typeof(LeaderboardRequest), 2000);
             timeOutList.Add(typeof(LeaveRoomRequest), 2000);
-            timeOutList.Add(typeof(LoginRequest), 3000);
+            timeOutList.Add(typeof(LoginRequest), 2000);
             timeOutList.Add(typeof(QuickGameRequest), 2000);
             timeOutList.Add(typeof(GiftPlayerRequest), 1000);
-            timeOutList.Add(typeof(RegisterRequest), 60000);
+            timeOutList.Add(typeof(RegisterRequest), 30000);
             timeOutList.Add(typeof(SuggestWordRequest), 5000);
             timeOutList.Add(typeof(UnlockAvatarRequest), 2000);
             timeOutList.Add(typeof(UpdateDisplayNameRequest), 2000);

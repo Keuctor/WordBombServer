@@ -399,7 +399,6 @@ namespace WordBombServer.Server
             if (_netManager.ConnectedPeersCount > MaxConnection)
                 request.Reject();
 
-            Console.WriteLine($"{_netManager.ConnectedPeersCount} / {MaxConnection} | {request.Data.PeekString()}");
             request.AcceptIfKey(GameInfo.VERSION);
         }
 
@@ -411,8 +410,8 @@ namespace WordBombServer.Server
             {
                 Id = peer.Id
             }), DeliveryMethod.ReliableOrdered);
-
             Console.WriteLine("We got connection sent Id:{1} / {0}", peer.EndPoint, peer.Id);
+            Console.WriteLine($"Total: {_netManager.ConnectedPeersCount}");
         }
 
         public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
