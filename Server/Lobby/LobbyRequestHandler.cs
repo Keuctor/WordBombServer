@@ -1,5 +1,6 @@
 ﻿using LiteNetLib;
 using LiteNetLib.Utils;
+using System.Drawing;
 using System.Globalization;
 using System.Security.Cryptography.X509Certificates;
 using WordBombServer.Common;
@@ -321,8 +322,43 @@ namespace WordBombServer.Server.Lobby
 
                         bool giveXp = false;
 
+                        if (lobby.Mode == 3)
+                        {
+                            var culture = CultureInfo.CurrentCulture;
+                            if (lobby.Language == 1) {
+                                culture = new CultureInfo("tr-TR");
+                            }
+                            if (string.Compare(guess, lobby.Properties.TargetWord, culture, CompareOptions.IgnoreNonSpace | CompareOptions.IgnoreCase) == 0)
+                            {
+                                player.EmeraldCounter++;
+                                if (player.EmeraldCounter >= 6)
+                                {
+                                    player.Emerald++;
+                                    player.EmeraldCounter = 0;
+                                }
 
-                        if (lobby.Mode == 1 && !guess.StartsWith(lobby.Properties.TargetWord))
+                                if (guess.Length >= 0)
+                                    player.Combo++;
+
+                                giveXp = true;
+
+                                //lobby.Properties.MatchedWords.Add(guess);
+                                lobby.NextPlayer(true);
+
+                                ChangeTurn(lobby, lobby.Properties.CurrentPlayerIndex, true);
+                                submitWordResponse.FailType = 0;
+                            }
+                            else
+                            {
+                                if (player.EmeraldCounter > 0)
+                                {
+                                    player.EmeraldCounter--;
+                                }
+                                player.Combo = 1;
+                                submitWordResponse.FailType = 1;
+                            }
+                        }
+                        else if (lobby.Mode == 1 && !guess.StartsWith(lobby.Properties.TargetWord))
                         {
                             if (player.EmeraldCounter > 0)
                             {
@@ -636,7 +672,7 @@ namespace WordBombServer.Server.Lobby
             turnChangedResponse.Round = lobby.Round;
             if (changeWord)
             {
-                lobby.Properties.TargetWord = wordBomb.WordProvider.GetRandomWordPart(lobby.Mode == 2 ? 1 : 2, lobby.Language);
+                lobby.Properties.TargetWord = wordBomb.WordProvider.GetRandomWordPart(lobby.Mode == 2 ? 1 : 2, lobby.Language, lobby.Mode == 3);
             }
             else
             {
@@ -648,13 +684,13 @@ namespace WordBombServer.Server.Lobby
                         lastText = new string(lastText[lastText.Length - 1], 1);
                         if (lastText.Contains("Ğ") || lastText.Contains("J"))
                         {
-                            lastText = wordBomb.WordProvider.GetRandomWordPart(2, lobby.Language);
+                            lastText = wordBomb.WordProvider.GetRandomWordPart(2, lobby.Language, false);
                         }
                         lobby.Properties.TargetWord = lastText;
                     }
                     else
                     {
-                        lobby.Properties.TargetWord = wordBomb.WordProvider.GetRandomWordPart(2, lobby.Language);
+                        lobby.Properties.TargetWord = wordBomb.WordProvider.GetRandomWordPart(2, lobby.Language, false);
                     }
                 }
             }
@@ -734,11 +770,17 @@ namespace WordBombServer.Server.Lobby
             var countdownResponse = new StartCountdownResponse()
             {
                 Countdown = (int)properties.CountDown,
-                FirstWordPart = wordBomb.WordProvider.GetRandomWordPart(lobby.Mode == 2 ? 1 : 2, lobby.Language),
+                FirstWordPart = wordBomb.WordProvider.GetRandomWordPart(lobby.Mode == 2 ? 1 : 2, lobby.Language, lobby.Mode == 3),
                 Timer = properties.CurrentMaxTime,
                 TargetLength = lobby.Mode == 2 ? (byte)GetTargetLength(lobby.Round) : (byte)0,
                 OrderOfPlayers = lobby.Properties.MatchPlayers.Select(t => t.Id).ToArray()
             };
+
+            if (lobby.Mode == 3)
+            {
+                Console.WriteLine("Picture mode request");
+            }
+
 
             lobby.Properties.TargetWord = countdownResponse.FirstWordPart;
             lobby.Properties.TargetLength = countdownResponse.TargetLength;

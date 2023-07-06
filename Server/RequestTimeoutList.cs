@@ -26,13 +26,13 @@ namespace WordBombServer.Server
             timeOutList.Add(typeof(LoginRequest), 2000);
             timeOutList.Add(typeof(QuickGameRequest), 2000);
             timeOutList.Add(typeof(GiftPlayerRequest), 1000);
-            timeOutList.Add(typeof(RegisterRequest), 30000);
+            timeOutList.Add(typeof(RegisterRequest), 10000);
             timeOutList.Add(typeof(SuggestWordRequest), 5000);
             timeOutList.Add(typeof(UnlockAvatarRequest), 2000);
             timeOutList.Add(typeof(UpdateDisplayNameRequest), 2000);
             timeOutList.Add(typeof(UpdatePlayerInfoRequest), 1000);
             timeOutList.Add(typeof(GameStartRequest), 5000);
-            timeOutList.Add(typeof(LogoutRequest), 2000);
+            timeOutList.Add(typeof(LogoutRequest), 1000);
         }
         public bool AddType(Type type, NetPeer peer)
         {

@@ -1,5 +1,5 @@
 ﻿
 public static class GameInfo
 {
-    public static string VERSION = "WORDBOMB11";
+    public static string VERSION = "WORDBOMB13";
 }

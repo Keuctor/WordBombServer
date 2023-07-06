@@ -1,4 +1,5 @@
-﻿using WordBombServer.Server;
+﻿using System.Globalization;
+using WordBombServer.Server;
 
 namespace WordBombServer
 {
@@ -12,6 +13,7 @@ namespace WordBombServer
         {
             try
             {
+                Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
                 RequestTimer = new RequestTimeoutList();
                 AppDomain.CurrentDomain.ProcessExit += new EventHandler(ConsoleExit);
                 server = new WordBomb(60000, 9050);
