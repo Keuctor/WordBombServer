@@ -154,10 +154,14 @@ namespace WordBombServer.Server
             }
         }
 
+       
+
         private void LoginUser(LoginRequest request, NetPeer peer)
         {
             if (!Startup.RequestTimer.AddType(request.GetType(), peer))
                 return;
+
+         
 
             if (request.UserName.Any(t => !char.IsLetterOrDigit(t))
              || request.UserName.Length < 3 || request.UserName.Length > 20)
@@ -201,6 +205,7 @@ namespace WordBombServer.Server
             }
         }
 
+      
         public void UserLogin(LoginResponse response, NetPeer peer)
         {
             foreach (var p in LoggedInUsers)
