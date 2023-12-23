@@ -21,9 +21,6 @@ namespace WordBombServer.Server
         static HashSet<string> known_words_tr = new HashSet<string>();
         static HashSet<string> known_words_en = new HashSet<string>();
 
-        static HashSet<string> imagePathsTr = new HashSet<string>();
-        static HashSet<string> imagePathsEn = new HashSet<string>();
-
 
 
         static Random random = new Random();
@@ -35,8 +32,6 @@ namespace WordBombServer.Server
             words_en = LoadWords("/words/words_en.txt");
             known_words_en = LoadWords("/words/words_en_known.txt");
             known_words_tr = LoadWords("/words/words_tr_known.txt");
-            imagePathsTr = LoadWords("/words/images_tr.txt");
-            imagePathsEn = LoadWords("/words/images_en.txt");
 
             var suggestions = ReadSuggestions();
             foreach (var suggest in suggestions)
@@ -84,28 +79,21 @@ namespace WordBombServer.Server
 
 
 
-        public string GetRandomWordPart(int length, byte language,bool isPicturePath)
+        public string GetRandomWordPart(int length, byte language)
         {
-            var word = GetRandomWord(language,isPicturePath);
-            if (isPicturePath) { 
-                return word;
-            }
-
+            var word = GetRandomWord(language);
             var str = word.Trim();
             while (str.Length < length)
             {
-                str = GetRandomWord(language,false).Trim();
+                str = GetRandomWord(language).Trim();
             }
             return str.Substring(0, length);
         }
 
 
-        public string GetRandomWord(byte language,bool isPicturePath)
+        public string GetRandomWord(byte language)
         {
             var selectedWords = language == 0 ? words_en : words_tr;
-            if (isPicturePath) {
-                selectedWords = language==0 ? imagePathsEn : imagePathsTr;
-            }
             var index = random.Next(0, selectedWords.Count);
             return selectedWords.ElementAt(index);
         }

@@ -672,7 +672,7 @@ namespace WordBombServer.Server.Lobby
             turnChangedResponse.Round = lobby.Round;
             if (changeWord)
             {
-                lobby.Properties.TargetWord = wordBomb.WordProvider.GetRandomWordPart(lobby.Mode == 2 ? 1 : 2, lobby.Language, lobby.Mode == 3);
+                lobby.Properties.TargetWord = wordBomb.WordProvider.GetRandomWordPart(lobby.Mode == 2 ? 1 : 2, lobby.Language);
             }
             else
             {
@@ -684,13 +684,13 @@ namespace WordBombServer.Server.Lobby
                         lastText = new string(lastText[lastText.Length - 1], 1);
                         if (lastText.Contains("Ğ") || lastText.Contains("J"))
                         {
-                            lastText = wordBomb.WordProvider.GetRandomWordPart(2, lobby.Language, false);
+                            lastText = wordBomb.WordProvider.GetRandomWordPart(2, lobby.Language);
                         }
                         lobby.Properties.TargetWord = lastText;
                     }
                     else
                     {
-                        lobby.Properties.TargetWord = wordBomb.WordProvider.GetRandomWordPart(2, lobby.Language, false);
+                        lobby.Properties.TargetWord = wordBomb.WordProvider.GetRandomWordPart(2, lobby.Language);
                     }
                 }
             }
@@ -770,17 +770,11 @@ namespace WordBombServer.Server.Lobby
             var countdownResponse = new StartCountdownResponse()
             {
                 Countdown = (int)properties.CountDown,
-                FirstWordPart = wordBomb.WordProvider.GetRandomWordPart(lobby.Mode == 2 ? 1 : 2, lobby.Language, lobby.Mode == 3),
+                FirstWordPart = wordBomb.WordProvider.GetRandomWordPart(lobby.Mode == 2 ? 1 : 2, lobby.Language),
                 Timer = properties.CurrentMaxTime,
                 TargetLength = lobby.Mode == 2 ? (byte)GetTargetLength(lobby.Round) : (byte)0,
                 OrderOfPlayers = lobby.Properties.MatchPlayers.Select(t => t.Id).ToArray()
             };
-
-            if (lobby.Mode == 3)
-            {
-                Console.WriteLine("Picture mode request");
-            }
-
 
             lobby.Properties.TargetWord = countdownResponse.FirstWordPart;
             lobby.Properties.TargetLength = countdownResponse.TargetLength;
