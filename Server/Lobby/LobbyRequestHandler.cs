@@ -1,8 +1,6 @@
 ﻿using LiteNetLib;
 using LiteNetLib.Utils;
-using System.Drawing;
 using System.Globalization;
-using System.Security.Cryptography.X509Certificates;
 using WordBombServer.Common;
 using WordBombServer.Common.Packets.Request;
 using WordBombServer.Common.Packets.Response;
@@ -23,6 +21,8 @@ namespace WordBombServer.Server.Lobby
             this.wordBomb = wordBomb;
             RequestTimeoutList.OnFail += OnFailTimeout;
 
+            CreateExampleLobby();
+
             processor.SubscribeReusable<CreateRoomRequest, NetPeer>(CreateLobby);
             processor.SubscribeReusable<LeaveRoomRequest, NetPeer>(LeaveRoom);
             processor.SubscribeReusable<JoinRoomRequest, NetPeer>(JoinRoom);
@@ -39,54 +39,59 @@ namespace WordBombServer.Server.Lobby
             processor.SubscribeReusable<QuickGameRequest, NetPeer>(QuickLobby);
             processor.SubscribeReusable<UnlockAvatarRequest, NetPeer>(UnlockAvatar);
             processor.SubscribeReusable<LeaderboardRequest, NetPeer>(GetLeaderboard);
-            processor.SubscribeReusable<SetPerkRequest, NetPeer>(SetSelectedPerk);
         }
 
-        private void SetSelectedPerk(SetPerkRequest request, NetPeer peer)
+
+        private void CreateExampleLobby()
         {
-            var perk = wordBomb.PerkManager.GetPerk(request.SelectedPerkId);
-            if (perk == null)
+            var lobby = new Lobby("EXAMPLE")
             {
-                ErrorResponse(peer, "NULL_PERK");
-            }
-
-            var price = perk.Price;
-
-            if (wordBomb.LoggedInUsers.TryGetValue(peer.Id, out var userName))
-            {
-                var user = wordBomb.UserContext.GetUser(userName);
-                if (user.EmeraldCount >= price)
+                Language = 0,
+                Mode = 0,
+                Host = null,
+                IsPrivate = true,
+                Speed = 1,
+                Players = new List<Player>()
                 {
-                    user.EmeraldCount -= price;
-
-                    if (playersInLobbies.TryGetValue(peer.Id, out string code))
+                    new Player()
                     {
-                        if (lobbies.TryGetValue(code, out Lobby lobby))
-                        {
-                            var targetPlayer = lobby.Players.FirstOrDefault(t => t.UserName == userName);
-                            if (targetPlayer != null)
-                            {
-                                targetPlayer.SelectedGamePerkId = perk.Id;
-                            }
-                            else
-                            {
-                                Console.WriteLine("Error: Can't find player for perk selection.");
-                                ErrorResponse(peer, "SOMETHING_WENT_WRONG");
-                            }
-                        }
+                        AvatarId = 34,
+                        Id = 99990,
+                        Experience = 100,
+                        Peer =null,
+                        UserName = "User Anatolia",
+                        CrownCount = 55,
+                        IsMobile = false
+                    },
+                    new Player()
+                    {
+                        AvatarId = 35,
+                        Id = 99991,
+                        Experience = 200,
+                        Peer = null,
+                        UserName = "User Bardovski",
+                        CrownCount = 155,
+                        IsMobile = true
+                    },
+                    new Player()
+                    {
+                        AvatarId = 42,
+                        Id = 99992,
+                        Experience = 300,
+                        Peer = null,
+                        UserName = "User Clario ",
+                        CrownCount = 255,
+                        IsMobile = false
                     }
                 }
-                else
-                {
-                    ErrorResponse(peer, "NOT_ENOUGH_EMERALD");
-                }
-            }
-            else
-            {
-                ErrorResponse(peer, "ERROR_NOT_LOGGED_IN");
-            }
+            };
 
+            lobby.Code = "#AAA#";
+            lobbies.Add(lobby.Code, lobby);
+            LobbiesList.Add(lobby);
         }
+
+
 
         private void OnFailTimeout(Type obj, NetPeer peer)
         {
@@ -325,7 +330,8 @@ namespace WordBombServer.Server.Lobby
                         if (lobby.Mode == 3)
                         {
                             var culture = CultureInfo.CurrentCulture;
-                            if (lobby.Language == 1) {
+                            if (lobby.Language == 1)
+                            {
                                 culture = new CultureInfo("tr-TR");
                             }
                             if (string.Compare(guess, lobby.Properties.TargetWord, culture, CompareOptions.IgnoreNonSpace | CompareOptions.IgnoreCase) == 0)
@@ -1094,6 +1100,10 @@ namespace WordBombServer.Server.Lobby
                 }
 
                 playersInTheLobby = lobby.Players;
+
+                if (lobby.Code.Contains("#"))
+                    return;
+
                 var playerLeftResponse = new PlayerLeftResponse()
                 {
                     Id = peer.Id
@@ -1129,11 +1139,16 @@ namespace WordBombServer.Server.Lobby
                 }
                 if (wordBomb.LoggedInUsers.TryGetValue(peer.Id, out var userName))
                 {
+                    var id = -1;
+                    if (lobby.Host != null)
+                    {
+                        id = lobby.Host.Id;
+                    }
                     var joinRoomResponse = new JoinRoomResponse()
                     {
                         GameLanguage = lobby.Language,
                         GameMode = lobby.Mode,
-                        HostId = lobby.Host.Id,
+                        HostId = id,
                         Players = lobby.Players.ToArray(),
                         RoomCode = lobby.Code,
                         GameSpeed = lobby.Speed,
@@ -1151,13 +1166,15 @@ namespace WordBombServer.Server.Lobby
                         CrownCount = userData.WinCount,
                         Peer = peer,
                         RoomCode = lobby.Code,
-                        UserName = userData.DisplayName,
+                        UserName = (!userData.IsAdmin) ? userData.DisplayName : $"<b><color=red>{userData.DisplayName}</color></b>",
                         IsMobile = joinRoom.IsMobile,
                     };
 
                     lobby.Players.Add(player);
                     wordBomb.SendPacket(peer, joinRoomResponse);
                     playersInLobbies.Add(peer.Id, lobby.Code);
+                    if (lobby.Code.Contains("#"))
+                        return;
 
                     var playerJoinedResponse = new PlayerJoinedResponse()
                     {
@@ -1208,7 +1225,7 @@ namespace WordBombServer.Server.Lobby
                                 Id = peer.Id,
                                 Experience = userData.Experience,
                                 Peer = peer,
-                                UserName = userData.DisplayName,
+                                UserName  = (!userData.IsAdmin) ? userData.DisplayName : $"<b><color=red>{userData.DisplayName}</color></b>",
                                 CrownCount = userData.WinCount,
                                 IsMobile = request.IsMobile
                             }

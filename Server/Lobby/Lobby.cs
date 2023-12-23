@@ -22,6 +22,7 @@ namespace WordBombServer.Server.Lobby
         public string MatchWord;
 
         public string TargetWord;
+
         public byte TargetLength;
 
         public List<Player> MatchPlayers = new List<Player>(8);
@@ -32,7 +33,7 @@ namespace WordBombServer.Server.Lobby
     {
         public string Id { get; private set; }
         public string Name { get; private set; }
-        public string Code { get; private set; }
+        public string Code { get;  set; }
         public byte Mode { get; set; }
         public byte Speed { get; set; }
         public byte Language { get; set; }

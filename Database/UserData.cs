@@ -16,6 +16,7 @@ namespace WordBombServer.Database
         public float Experience { get; set; }
         public short WinCount { get; set; }
         public int EmeraldCount { get; set; }
+        public bool IsAdmin { get; set; }
         public int CoinCount { get; set; }
         public string UnlockedAvatars { get; set; }
     }

