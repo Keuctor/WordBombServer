@@ -760,7 +760,7 @@ namespace WordBombServer.Server.Lobby
             }
             else if(lobby.GameType==1)//radial
             {
-                return wordBomb.WordProvider.GetRandomLetters(6, language);
+                return wordBomb.WordProvider.GetRandomLetters(language);
             }
             return string.Empty;
         }
