@@ -1,6 +1,8 @@
 ﻿using LiteNetLib;
 using LiteNetLib.Utils;
+using System.Drawing;
 using System.Globalization;
+using System.Security.Cryptography.X509Certificates;
 using WordBombServer.Common;
 using WordBombServer.Common.Packets.Request;
 using WordBombServer.Common.Packets.Response;
@@ -21,8 +23,6 @@ namespace WordBombServer.Server.Lobby
             this.wordBomb = wordBomb;
             RequestTimeoutList.OnFail += OnFailTimeout;
 
-            CreateExampleLobby();
-
             processor.SubscribeReusable<CreateRoomRequest, NetPeer>(CreateLobby);
             processor.SubscribeReusable<LeaveRoomRequest, NetPeer>(LeaveRoom);
             processor.SubscribeReusable<JoinRoomRequest, NetPeer>(JoinRoom);
@@ -41,57 +41,7 @@ namespace WordBombServer.Server.Lobby
             processor.SubscribeReusable<LeaderboardRequest, NetPeer>(GetLeaderboard);
         }
 
-
-        private void CreateExampleLobby()
-        {
-            var lobby = new Lobby("EXAMPLE")
-            {
-                Language = 0,
-                Mode = 0,
-                Host = null,
-                IsPrivate = true,
-                Speed = 1,
-                Players = new List<Player>()
-                {
-                    new Player()
-                    {
-                        AvatarId = 34,
-                        Id = 99990,
-                        Experience = 100,
-                        Peer =null,
-                        UserName = "User Anatolia",
-                        CrownCount = 55,
-                        IsMobile = false
-                    },
-                    new Player()
-                    {
-                        AvatarId = 35,
-                        Id = 99991,
-                        Experience = 200,
-                        Peer = null,
-                        UserName = "User Bardovski",
-                        CrownCount = 155,
-                        IsMobile = true
-                    },
-                    new Player()
-                    {
-                        AvatarId = 42,
-                        Id = 99992,
-                        Experience = 300,
-                        Peer = null,
-                        UserName = "User Clario ",
-                        CrownCount = 255,
-                        IsMobile = false
-                    }
-                }
-            };
-
-            lobby.Code = "#AAA#";
-            lobbies.Add(lobby.Code, lobby);
-            LobbiesList.Add(lobby);
-        }
-
-
+       
 
         private void OnFailTimeout(Type obj, NetPeer peer)
         {
@@ -268,7 +218,8 @@ namespace WordBombServer.Server.Lobby
                     Code = lobby.Value.Code,
                     Language = lobby.Value.Language,
                     PlayerCount = lobby.Value.Players.Count,
-                    Mode = lobby.Value.Mode
+                    Mode = lobby.Value.Mode,
+                    GameType = lobby.Value.GameType
                 };
             }
             return lobbyInfos;
@@ -327,11 +278,41 @@ namespace WordBombServer.Server.Lobby
 
                         bool giveXp = false;
 
+                        if (lobby.GameType == 1)
+                        {
+                            if (lobby.Properties.MatchedWords.Contains(guess))
+                            { 
+                                submitWordResponse.FailType = 2;
+                            }
+                            if (guess.Length <= 2) {
+                                submitWordResponse.FailType = 3;
+                            }
+                            else if (wordBomb.WordProvider.HasWord(lobby.Language, submitWordResponse.Word))
+                            {
+
+                                if (guess.Length >= 6)
+                                {
+                                    player.Emerald++;
+                                    player.EmeraldCounter = 0;
+                                }
+
+                                player.Combo = (byte)guess.Length;
+                                giveXp = true;
+                                lobby.NextPlayer(true);
+                                ChangeTurn(lobby, lobby.Properties.CurrentPlayerIndex, true);
+                                submitWordResponse.FailType = 0;
+                                lobby.Properties.MatchedWords.Add(guess);
+                            }
+                            else
+                            {
+                                submitWordResponse.FailType = 1;
+                            }
+                        }
+                        else
                         if (lobby.Mode == 3)
                         {
                             var culture = CultureInfo.CurrentCulture;
-                            if (lobby.Language == 1)
-                            {
+                            if (lobby.Language == 1) {
                                 culture = new CultureInfo("tr-TR");
                             }
                             if (string.Compare(guess, lobby.Properties.TargetWord, culture, CompareOptions.IgnoreNonSpace | CompareOptions.IgnoreCase) == 0)
@@ -478,14 +459,7 @@ namespace WordBombServer.Server.Lobby
 
                                 var addCoin = guess.Length * player.Combo;
 
-                                if (lobby.Solo)
-                                {
-                                    if (addCoin >= 2)
-                                    {
-                                        addCoin = addCoin / 2;
-                                    }
-                                }
-
+                               
                                 var addedEmerald = player.Emerald;
                                 player.Emerald = 0;
 
@@ -678,7 +652,7 @@ namespace WordBombServer.Server.Lobby
             turnChangedResponse.Round = lobby.Round;
             if (changeWord)
             {
-                lobby.Properties.TargetWord = wordBomb.WordProvider.GetRandomWordPart(lobby.Mode == 2 ? 1 : 2, lobby.Language);
+                lobby.Properties.TargetWord = GetWordPart(lobby);
             }
             else
             {
@@ -690,13 +664,13 @@ namespace WordBombServer.Server.Lobby
                         lastText = new string(lastText[lastText.Length - 1], 1);
                         if (lastText.Contains("Ğ") || lastText.Contains("J"))
                         {
-                            lastText = wordBomb.WordProvider.GetRandomWordPart(2, lobby.Language);
+                            lastText =  GetWordPart(lobby);
                         }
                         lobby.Properties.TargetWord = lastText;
                     }
                     else
                     {
-                        lobby.Properties.TargetWord = wordBomb.WordProvider.GetRandomWordPart(2, lobby.Language);
+                        lobby.Properties.TargetWord = GetWordPart(lobby);
                     }
                 }
             }
@@ -770,17 +744,43 @@ namespace WordBombServer.Server.Lobby
             return new Random().Next(4, Math.Min(10, Remap(round, 1, 70, 7, 12)));
         }
 
+        public string GetWordPart(Lobby lobby) {
+            var language = lobby.Language;
+            if (lobby.GameType == 0)//original
+            { 
+
+                if (lobby.Mode == 2)
+                {
+                    return wordBomb.WordProvider.GetRandomWordPart(1, language);
+                }
+                else
+                {
+                    return wordBomb.WordProvider.GetRandomWordPart(2, language);
+                }
+            }
+            else if(lobby.GameType==1)//radial
+            {
+                return wordBomb.WordProvider.GetRandomLetters(6, language);
+            }
+            return string.Empty;
+        }
+
         private void StartCountdownForLobby(Lobby lobby)
         {
+            if (lobby.GameType != 0)
+                lobby.Mode = 0;
+
             var properties = lobby.StartMatch();
             var countdownResponse = new StartCountdownResponse()
             {
                 Countdown = (int)properties.CountDown,
-                FirstWordPart = wordBomb.WordProvider.GetRandomWordPart(lobby.Mode == 2 ? 1 : 2, lobby.Language),
+                FirstWordPart = GetWordPart(lobby),
                 Timer = properties.CurrentMaxTime,
                 TargetLength = lobby.Mode == 2 ? (byte)GetTargetLength(lobby.Round) : (byte)0,
                 OrderOfPlayers = lobby.Properties.MatchPlayers.Select(t => t.Id).ToArray()
             };
+
+           
 
             lobby.Properties.TargetWord = countdownResponse.FirstWordPart;
             lobby.Properties.TargetLength = countdownResponse.TargetLength;
@@ -972,12 +972,18 @@ namespace WordBombServer.Server.Lobby
             if (!Startup.RequestTimer.AddType(settings.GetType(), peer))
                 return;
 
+
+            
+
             if (playersInLobbies.TryGetValue(peer.Id, out string code))
             {
                 if (lobbies.TryGetValue(code, out Lobby lobby))
                 {
                     if (peer.Id == lobby.Host.Id)
                     {
+                        if (lobby.GameType != 0)
+                            settings.Mode = 0;
+
                         if (settings.Language == lobby.Language && settings.Mode == lobby.Mode
                              && settings.Speed == lobby.Speed && settings.IsPrivate == lobby.IsPrivate)
                         {
@@ -1100,10 +1106,6 @@ namespace WordBombServer.Server.Lobby
                 }
 
                 playersInTheLobby = lobby.Players;
-
-                if (lobby.Code.Contains("#"))
-                    return;
-
                 var playerLeftResponse = new PlayerLeftResponse()
                 {
                     Id = peer.Id
@@ -1139,16 +1141,12 @@ namespace WordBombServer.Server.Lobby
                 }
                 if (wordBomb.LoggedInUsers.TryGetValue(peer.Id, out var userName))
                 {
-                    var id = -1;
-                    if (lobby.Host != null)
-                    {
-                        id = lobby.Host.Id;
-                    }
                     var joinRoomResponse = new JoinRoomResponse()
                     {
                         GameLanguage = lobby.Language,
                         GameMode = lobby.Mode,
-                        HostId = id,
+                        HostId = lobby.Host.Id,
+                        GameType = lobby.GameType,
                         Players = lobby.Players.ToArray(),
                         RoomCode = lobby.Code,
                         GameSpeed = lobby.Speed,
@@ -1166,15 +1164,13 @@ namespace WordBombServer.Server.Lobby
                         CrownCount = userData.WinCount,
                         Peer = peer,
                         RoomCode = lobby.Code,
-                        UserName = (!userData.IsAdmin) ? userData.DisplayName : $"<b><color=red>{userData.DisplayName}</color></b>",
+                        UserName = userData.DisplayName,
                         IsMobile = joinRoom.IsMobile,
                     };
 
                     lobby.Players.Add(player);
                     wordBomb.SendPacket(peer, joinRoomResponse);
                     playersInLobbies.Add(peer.Id, lobby.Code);
-                    if (lobby.Code.Contains("#"))
-                        return;
 
                     var playerJoinedResponse = new PlayerJoinedResponse()
                     {
@@ -1205,6 +1201,9 @@ namespace WordBombServer.Server.Lobby
             if (!Startup.RequestTimer.AddType(request.GetType(), peer))
                 return;
 
+
+            var type = request.GameType;
+
             if (wordBomb.LoggedInUsers.TryGetValue(peer.Id, out var userName))
             {
                 var userData = wordBomb.UserContext.GetUser(userName);
@@ -1214,6 +1213,7 @@ namespace WordBombServer.Server.Lobby
                     {
                         Language = request.GameLanguage,
                         Mode = request.GameMode,
+                        GameType = request.GameType,
                         Host = peer,
                         IsPrivate = request.IsPrivate,
                         Speed = request.GameSpeed,
@@ -1225,7 +1225,7 @@ namespace WordBombServer.Server.Lobby
                                 Id = peer.Id,
                                 Experience = userData.Experience,
                                 Peer = peer,
-                                UserName  = (!userData.IsAdmin) ? userData.DisplayName : $"<b><color=red>{userData.DisplayName}</color></b>",
+                                UserName = userData.DisplayName,
                                 CrownCount = userData.WinCount,
                                 IsMobile = request.IsMobile
                             }
@@ -1237,6 +1237,7 @@ namespace WordBombServer.Server.Lobby
                         IsPrivate = lobby.IsPrivate,
                         GameLanguage = lobby.Language,
                         GameMode = lobby.Mode,
+                        GameType = lobby.GameType,
                         RoomCode = lobby.Code,
                         RoomTitle = lobby.Name,
                         GameSpeed = lobby.Speed

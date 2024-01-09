@@ -6,17 +6,17 @@ namespace WordBombServer.Common
 
     public class Player : INetSerializable
     {
-        public const int MAX_PLAYER_NAME_LENGTH = 20;
-        public int Id { get; set; }
-        public string RoomCode { get; set; }
-        public string UserName { get; set; }
-        public int CrownCount { get; set; }
-        public short AvatarId { get; set; }
-        public byte Combo { get; set; }
-        public byte Emerald { get; set; }
+        public const int MAX_PLAYER_NAME_LENGTH = 20; 
+        public int Id { get; set; }  
+        public string RoomCode { get; set; } 
+        public string UserName { get; set; } 
+        public int CrownCount { get; set; } 
+        public short AvatarId { get; set; } 
+        public byte Combo { get; set; } 
+        public byte Emerald { get; set; } 
         public byte EmeraldCounter { get; set; }
-        public NetPeer Peer { get; set; }
-        public bool GameLoaded { get; set; }
+        public NetPeer Peer { get; set; } 
+        public bool GameLoaded { get; set; } 
         public bool IsDead { get; set; }
         public bool IsMobile { get; set; }
         public float Experience { get; set; }

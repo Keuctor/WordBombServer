@@ -1,5 +1,7 @@
 ﻿
 
+using System.Linq;
+
 namespace WordBombServer.Server
 {
     /// <summary>
@@ -13,6 +15,34 @@ namespace WordBombServer.Server
     }
     public class WordProvider
     {
+        string[] engWords = { "THING", "HAPPY", "GREAT", "ABOUT", "PEOPLE", "FAMILY",
+        "FRIEND", "MUSIC", "WORLD", "PLACE", "CHOOSE", "CHANGE", "TRUST",
+        "POWER", "SMILE", "STILL", "EARLY", "WATER", "CLOUD", "COLOR", "QUIET",
+        "CLEAR", "FRESH", "EAGER", "WORTH", "DREAM", "BRING", "BEGIN", "STAND",
+        "CLOSE", "HEART", "MIND", "WORKS", "LAUGH", "LIGHT", "SHAPE", "FIRST",
+        "STARS", "NIGHT", "GREET", "SHARE", "HAPPY", "THINK", "SHINE", "STRONG",
+        "WARM", "BEAUTY", "CHILD", "PEACE", "SMART", "BRISK", "GRACE", "BLISS",
+        "HONOR", "BLAZE", "KIND", "LUCKY", "BLISS", "SWIFT", "GRIT", "GLOW", "SNUG",
+        "CALM", "BRISK", "GOOD", "GRIN", "QUIRK", "SWELL", "MERRY", "BLISS", "STEADY",
+        "GRACE", "SLEEK", "SWEEP", "BRAVE", "GRAND", "QUIRK", "COZY", "LIVID",
+        "PULSE","RICH","ROYAL","SPIRIT","SPARK","SWEET","TRUTH","BLUSH","BLITZ","GLORY",
+        "BLINK","GLEAM","GRIEF","SWARM","SWIRL","SWISH","THRIVE","TWINK","TWIST" };
+
+
+
+        string[] turkishWords = { "EVET", "HAYIR", "SELAM", "NEDEN", "GÜZEL", "HAK", "İNSAN",
+                      "AİLE", "DOST", "MÜZİK", "DÜNYA", "YER", "GÖRMEK", "YAY", "GÜVEN", "GÜÇ",
+                      "HALA", "SU", "YER", "SEÇ", "DELİ", "GÜÇ", "HALA", "SU", "RENK", "HEVES",
+                      "DÜŞ", "GEMİ", "BAŞLA", "DUR", "KALP", "ZİHİN", "İŞ","KILIÇ","GÜL", "İLK", "GECE",
+                      "SELAM", "SUÇ", "GÜÇLÜ", "SICAK", "GÜZEL",
+                      "ÇOCUK", "BARIŞ", "SEVGİ" ,"YORGUN","AŞK",
+                      "SABAH","TER","SPOR","KAS","KÜTLE","AĞIR","HAFİF","MADEN","OCAK","KATI","SIVI","ILIK",
+                      "SAAT", "KİTAP", "OKUL", "DERS", "KALEM",
+                      "KÖPEK", "KEDİ", "YAZI", "RESİM" ,"HAYVAN","TALEP","YOĞUN","YAĞMUR","SOĞUK","AĞIR","LALE","ARIZA","ANKARA"};
+
+
+
+
         static HashSet<string> words_tr = new HashSet<string>();
         static HashSet<string> words_tr_suggested = new HashSet<string>();
         static HashSet<string> words_en = new HashSet<string>();
@@ -20,8 +50,6 @@ namespace WordBombServer.Server
 
         static HashSet<string> known_words_tr = new HashSet<string>();
         static HashSet<string> known_words_en = new HashSet<string>();
-
-
 
         static Random random = new Random();
 
@@ -77,11 +105,62 @@ namespace WordBombServer.Server
             return words_tr_suggested.Contains(word);
         }
 
+        char[] wovels = new char[] { 'E', 'A', 'I', 'O', 'U' };
+        char[] englishConsonants =
+                    new char[] { 'B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'X', 'Y', 'Z' };
 
+
+        char[] wovelsTurkish = new char[] { 'E', 'A', 'I', 'İ', 'O', 'Ö', 'Ü', 'U' }.OrderBy(_ => random.Next()).ToArray();
+        char[] turkishConsonants =
+            new char[] { 'B', 'C', 'Ç', 'D', 'F', 'G', 'Ğ', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'R', 'S',
+                'Ş', 'T', 'V', 'Y', 'Z' }
+            .OrderBy(_ => random.Next()).ToArray();
+
+
+        public string GetRandomLetters(int length, byte language)
+        {
+            Random random = new Random();
+
+            if (language == 0)
+            {
+                var randomWord = engWords.OrderBy(_ => random.Next()).ToArray()[0];
+
+                while (randomWord.Length < 6)
+                {
+                    if (random.NextDouble() >= 0.5)
+                    {
+                        randomWord += wovels[random.Next(0, wovels.Length)];
+                    }
+                    else
+                    {
+                        randomWord += englishConsonants[random.Next(0, wovels.Length)];
+                    }
+                }
+
+                return randomWord;
+            }
+            else
+            {
+                var randomWord = turkishWords.OrderBy(_ => random.Next()).ToArray()[0];
+                while (randomWord.Length < 6)
+                {
+                    if (random.NextDouble() >= 0.5)
+                    {
+                        randomWord += wovelsTurkish[random.Next(0, wovels.Length)];
+                    }
+                    else
+                    {
+                        randomWord += turkishConsonants[random.Next(0, wovels.Length)];
+                    }
+                }
+                return randomWord;
+            }
+        }
 
         public string GetRandomWordPart(int length, byte language)
         {
             var word = GetRandomWord(language);
+
             var str = word.Trim();
             while (str.Length < length)
             {

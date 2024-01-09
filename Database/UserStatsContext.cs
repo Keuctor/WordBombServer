@@ -39,6 +39,22 @@ namespace WordBombServer.Database
             Bonuses.Add(new DailyBonus() { Emerald = 100, Chest = true });//day 7
         }
 
+        public bool RemovePlayerStat(uint userId) {
+
+            UserStat stat = null;
+            for (int i = 0; i < Data.UserStats.Count; i++)
+            {
+                if (Data.UserStats[i].Id == userId)
+                {
+                    stat = Data.UserStats[i];
+                }
+            }
+            if (stat != null) {
+                Data.UserStats.Remove(stat);
+                return true;
+            }
+            return false;
+        }
         public UserStat GetOrCreatePlayerStat(uint userId)
         {
             for (int i = 0; i < Data.UserStats.Count; i++)

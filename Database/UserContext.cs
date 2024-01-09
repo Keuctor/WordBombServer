@@ -23,7 +23,7 @@ namespace WordBombServer.Database
         {
             return (uint)(rand.Next(1 << 30)) << 2 | (uint)(rand.Next(1 << 2));
         }
-       
+
         public void AddUser(UserData userData)
         {
             if (HasUser(userData.Name))
@@ -38,8 +38,10 @@ namespace WordBombServer.Database
             this.SaveChanges();
         }
 
-        public UserData GetUser(string name) {
-            if (runtimeUserTable.TryGetValue(name, out var userData)) {
+        public UserData GetUser(string name)
+        {
+            if (runtimeUserTable.TryGetValue(name, out var userData))
+            {
                 return userData;
             }
             return null;
@@ -62,6 +64,16 @@ namespace WordBombServer.Database
             {
                 var user = context.Users[i];
                 this.runtimeUserTable.Add(user.Name, user);
+            }
+        }
+
+        public void RemoveUser(string userName, string password)
+        {
+            var user = GetUser(userName);
+            if (user.Password == password)
+            {
+                this.Data.Users.Remove(user);
+                this.runtimeUserTable.Remove(userName);
             }
         }
     }

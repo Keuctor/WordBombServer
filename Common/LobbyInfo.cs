@@ -1,9 +1,4 @@
 ﻿using LiteNetLib.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace WordBombServer.Common
 {
@@ -14,6 +9,7 @@ namespace WordBombServer.Common
         public int PlayerCount { get; set; }
         public byte Language { get; set; }
         public byte Mode { get; set; }
+        public byte GameType { get; set; }
 
         public void Deserialize(NetDataReader reader)
         {
@@ -22,8 +18,8 @@ namespace WordBombServer.Common
             PlayerCount = reader.GetInt();
             Language = reader.GetByte();
             Mode = reader.GetByte();
+            GameType = reader.GetByte();
         }
-
         public void Serialize(NetDataWriter writer)
         {
             writer.Put(Title);
@@ -31,6 +27,7 @@ namespace WordBombServer.Common
             writer.Put(PlayerCount);
             writer.Put(Language);
             writer.Put(Mode);
+            writer.Put(GameType);
         }
     }
 }

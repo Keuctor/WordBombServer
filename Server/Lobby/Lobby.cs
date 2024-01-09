@@ -22,7 +22,6 @@ namespace WordBombServer.Server.Lobby
         public string MatchWord;
 
         public string TargetWord;
-
         public byte TargetLength;
 
         public List<Player> MatchPlayers = new List<Player>(8);
@@ -33,13 +32,15 @@ namespace WordBombServer.Server.Lobby
     {
         public string Id { get; private set; }
         public string Name { get; private set; }
-        public string Code { get;  set; }
+        public string Code { get; private set; }
         public byte Mode { get; set; }
         public byte Speed { get; set; }
         public byte Language { get; set; }
+        public byte GameType { get; set; }
 
         public List<IPAddress> KickedPlayerList = new List<IPAddress>();
         public bool IsPrivate { get; set; }
+        
         public NetPeer Host { get; set; }
         public bool Solo { get; set; }
 
@@ -73,8 +74,11 @@ namespace WordBombServer.Server.Lobby
             this.Solo = this.Properties.MatchPlayers.Count == 1;
             this.Properties.MatchWord = "";
             this.Properties.CurrentPlayerIndex = 0;
-            var at = this.Mode == 2 ? 4 : 0;
+            var at = this.Mode == 2 ? 4 : 0;   
             this.Properties.CurrentMaxTime = (this.Speed == 0 ? 20 : this.Speed == 1 ? 16 : 12) + at;
+            if (this.GameType == 1) {
+                Properties.CurrentMaxTime += 3;
+            }
             this.Properties.Time = this.Properties.CurrentMaxTime;
             this.Properties.PlayerHealths = new Dictionary<int, byte>();
             this.Properties.CountDown = 3;

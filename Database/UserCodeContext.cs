@@ -24,6 +24,16 @@ namespace WordBombServer.Database
 
         }
 
+        public void RemoveUser(uint id) {
+            for (int i = Data.Users.Count - 1; i >= 0; i--)
+            {
+                if (Data.Users[i].Id == id)
+                {
+                    Data.Users.RemoveAt(i);
+                }
+            }
+        }
+
         public bool UseCode(uint id, string code)
         {
             if (IsCodeUsed(id, code))

@@ -15,25 +15,27 @@ namespace WordBombServer.Server
         public RequestTimeoutList()
         {
             Requests = new Dictionary<IPAddress, Dictionary<Type, int>>();
-            timeOutList.Add(typeof(ChangeRoomSettingRequest), 600);
-            timeOutList.Add(typeof(ChatMessageRequest), 1000);
+            timeOutList.Add(typeof(ChangeRoomSettingRequest), 1000);
+            timeOutList.Add(typeof(ChatMessageRequest), 1250);
             timeOutList.Add(typeof(CheatCodeRequest), 2000);
             timeOutList.Add(typeof(CreateRoomRequest), 3000);
             timeOutList.Add(typeof(JoinRoomRequest), 2000);
-            timeOutList.Add(typeof(KickPlayerRequest), 1000);
+            timeOutList.Add(typeof(KickPlayerRequest), 4000);
             timeOutList.Add(typeof(LeaderboardRequest), 2000);
             timeOutList.Add(typeof(LeaveRoomRequest), 2000);
             timeOutList.Add(typeof(LoginRequest), 2000);
             timeOutList.Add(typeof(QuickGameRequest), 2000);
             timeOutList.Add(typeof(GiftPlayerRequest), 1000);
-            timeOutList.Add(typeof(RegisterRequest), 5000);
-            timeOutList.Add(typeof(SuggestWordRequest), 1000);
+            timeOutList.Add(typeof(RegisterRequest), 1000);
+            timeOutList.Add(typeof(SuggestWordRequest), 5000);
             timeOutList.Add(typeof(UnlockAvatarRequest), 2000);
             timeOutList.Add(typeof(UpdateDisplayNameRequest), 2000);
             timeOutList.Add(typeof(UpdatePlayerInfoRequest), 1000);
             timeOutList.Add(typeof(GameStartRequest), 5000);
             timeOutList.Add(typeof(LogoutRequest), 1000);
+            timeOutList.Add(typeof(RemoveAccountRequest), 20000);
         }
+
         public bool AddType(Type type, NetPeer peer)
         {
             if (Requests.TryGetValue(peer.EndPoint.Address, out var result))

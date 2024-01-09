@@ -7,9 +7,8 @@ namespace WordBombServer
     {
         static int saveTimer = 0;
         const int SAVE_TIME_SECONDS = 30 * 60;
-        public static WordBomb Server;
+        private static WordBomb server;
         public static RequestTimeoutList RequestTimer;
-
         static void Main()
         {
             try
@@ -17,20 +16,17 @@ namespace WordBombServer
                 Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
                 RequestTimer = new RequestTimeoutList();
                 AppDomain.CurrentDomain.ProcessExit += new EventHandler(ConsoleExit);
-                Server = new WordBomb(60000, 9050);
-                Server.StartServer();
+                server = new WordBomb(60000, 9050);
+                server.StartServer();
                 var timer = new System.Timers.Timer();
                 timer.Interval = 250;
                 timer.Elapsed += Timer;
                 timer.Start();
-
                 while (true)
                 {
-                    Server.ServerTick();
+                    server.ServerTick();
                     Thread.Sleep(2);
                 }
-
-
             }
             catch (Exception e)
             {
@@ -49,17 +45,17 @@ namespace WordBombServer
         private static void ConsoleExit(object? sender, EventArgs e)
         {
             Console.WriteLine("Saving Users..");
-            Server.UserContext.SaveChanges();
+            server.UserContext.SaveChanges();
         }
 
         private static void Timer(object? sender, System.Timers.ElapsedEventArgs e)
         {
-            Server.lobbyRequestHandler.TickLobbies();
+            server.lobbyRequestHandler.TickLobbies();
             RequestTimer.Tick();
             saveTimer++;
             if (saveTimer > 4 * SAVE_TIME_SECONDS)
             {
-                Server.UserContext.SaveChanges();
+                server.UserContext.SaveChanges();
                 Console.WriteLine("Saving Users..");
                 saveTimer = 0;
             }
