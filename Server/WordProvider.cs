@@ -15,13 +15,41 @@ namespace WordBombServer.Server
     }
     public class WordProvider
     {
+        string[] engWords = { "THING", "HAPPY", "GREAT", "ABOUT", "PEOPLE", "FAMILY",
+        "FRIEND", "MUSIC", "WORLD", "PLACE", "CHOOSE", "CHANGE", "TRUST",
+        "POWER", "SMILE", "STILL", "EARLY", "WATER", "CLOUD", "COLOR", "QUIET",
+        "CLEAR", "FRESH", "EAGER", "WORTH", "DREAM", "BRING", "BEGIN", "STAND",
+        "CLOSE", "HEART", "MIND", "WORKS", "LAUGH", "LIGHT", "SHAPE", "FIRST",
+        "STARS", "NIGHT", "GREET", "SHARE", "HAPPY", "THINK", "SHINE", "STRONG",
+        "WARM", "BEAUTY", "CHILD", "PEACE", "SMART", "BRISK", "GRACE", "BLISS",
+        "HONOR", "BLAZE", "KIND", "LUCKY", "BLISS", "SWIFT", "GRIT", "GLOW", "SNUG",
+        "CALM", "BRISK", "GOOD", "GRIN", "QUIRK", "SWELL", "MERRY", "BLISS", "STEADY",
+        "GRACE", "SLEEK", "SWEEP", "BRAVE", "GRAND", "QUIRK", "COZY", "LIVID",
+        "PULSE","RICH","ROYAL","SPIRIT","SPARK","SWEET","TRUTH","BLUSH","BLITZ","GLORY",
+        "BLINK","GLEAM","GRIEF","SWARM","SWIRL","SWISH","THRIVE","TWINK","TWIST" };
+
+
+
+        string[] turkishWords = { "EVET", "HAYIR", "SELAM", "NEDEN", "GÜZEL", "HAK", "İNSAN",
+                      "AİLE", "DOST", "MÜZİK", "DÜNYA", "YER", "GÖRMEK", "YAY", "GÜVEN", "GÜÇ",
+                      "HALA", "SU", "YER", "SEÇ", "DELİ", "GÜÇ", "HALA", "SU", "RENK", "HEVES",
+                      "DÜŞ", "GEMİ", "BAŞLA", "DUR", "KALP", "ZİHİN", "İŞ","KILIÇ","GÜL", "İLK", "GECE",
+                      "SELAM", "SUÇ", "GÜÇLÜ", "SICAK", "GÜZEL",
+                      "ÇOCUK", "BARIŞ", "SEVGİ" ,"YORGUN","AŞK",
+                      "SABAH","TER","SPOR","KAS","KÜTLE","AĞIR","HAFİF","MADEN","OCAK","KATI","SIVI","ILIK",
+                      "SAAT", "KİTAP", "OKUL", "DERS", "KALEM",
+                      "KÖPEK", "KEDİ", "YAZI", "RESİM" ,"HAYVAN","TALEP","YOĞUN","YAĞMUR","SOĞUK","AĞIR","LALE","ARIZA","ANKARA"};
+
+
+
+
         static HashSet<string> words_tr = new HashSet<string>();
         static HashSet<string> words_tr_suggested = new HashSet<string>();
         static HashSet<string> words_en = new HashSet<string>();
         static HashSet<string> words_en_suggested = new HashSet<string>();
 
-        static List<string> known_words_tr = new List<string>();
-        static List<string> known_words_en = new List<string>();
+        static HashSet<string> known_words_tr = new HashSet<string>();
+        static HashSet<string> known_words_en = new HashSet<string>();
 
         static Random random = new Random();
 
@@ -30,10 +58,8 @@ namespace WordBombServer.Server
             Console.WriteLine("Loading words...");
             words_tr = LoadWords("/words/words_tr.txt");
             words_en = LoadWords("/words/words_en.txt");
-            known_words_en = LoadEnglishTop3000Words();
-            Console.WriteLine($"Known English Words {known_words_en.Count}");
-            known_words_tr = LoadTurkishTop3000Words();
-            Console.WriteLine($"Known Turkish Words {known_words_tr.Count}");
+            known_words_en = LoadWords("/words/words_en_known.txt");
+            known_words_tr = LoadWords("/words/words_tr_known.txt");
 
             var suggestions = ReadSuggestions();
             foreach (var suggest in suggestions)
@@ -85,20 +111,19 @@ namespace WordBombServer.Server
 
 
         char[] wovelsTurkish = new char[] { 'E', 'A', 'I', 'İ', 'O', 'Ö', 'Ü', 'U' }.OrderBy(_ => random.Next()).ToArray();
-
         char[] turkishConsonants =
             new char[] { 'B', 'C', 'Ç', 'D', 'F', 'G', 'Ğ', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'R', 'S',
                 'Ş', 'T', 'V', 'Y', 'Z' }
             .OrderBy(_ => random.Next()).ToArray();
 
 
-        public string GetRandomLetters(byte language)
+        public string GetRandomLetters(int length, byte language)
         {
             Random random = new Random();
 
             if (language == 0)
             {
-                var randomWord = known_words_en[random.Next(0, known_words_en.Count)];
+                var randomWord = engWords.OrderBy(_ => random.Next()).ToArray()[0];
 
                 while (randomWord.Length < 6)
                 {
@@ -116,7 +141,7 @@ namespace WordBombServer.Server
             }
             else
             {
-                var randomWord = known_words_tr[random.Next(0, known_words_tr.Count)];
+                var randomWord = turkishWords.OrderBy(_ => random.Next()).ToArray()[0];
                 while (randomWord.Length < 6)
                 {
                     if (random.NextDouble() >= 0.5)
@@ -152,6 +177,19 @@ namespace WordBombServer.Server
             return selectedWords.ElementAt(index);
         }
 
+        public void WriteKnownWord(byte lang, string word)
+        {
+            string wordTrDirr;
+            if (lang == 0)
+            {
+                wordTrDirr = AppDomain.CurrentDomain.BaseDirectory + "/words/words_en_known.txt";
+            }
+            else
+            {
+                wordTrDirr = AppDomain.CurrentDomain.BaseDirectory + "/words/words_tr_known.txt";
+            }
+            File.AppendAllText(wordTrDirr, $"{word},");
+        }
 
         public void WriteSuggestion(byte lang, string suggestion)
         {
@@ -186,48 +224,6 @@ namespace WordBombServer.Server
             }
             return suggestions;
         }
-
-
-        private List<string> LoadTurkishTop3000Words()
-        {
-            string path = "/words/words_tr_known.txt";
-            var wordTrDirr = AppDomain.CurrentDomain.BaseDirectory + path;
-            string text = File.ReadAllText(wordTrDirr);
-
-            string[] arrayString = text.Split(',', StringSplitOptions.RemoveEmptyEntries);
-            List<string> listToReturn = new List<string>();
-            for (int i = 0; i < arrayString.Length; i++)
-            {
-                if (arrayString[i].Contains('-') || arrayString[i].Contains(',') ||
-                    arrayString[i].Contains('+') || arrayString[i].Contains('*')
-                    || arrayString[i].Contains('.'))
-                    continue;
-
-                if (arrayString[i].Length>=4 && arrayString[i].Length<=6)
-                    listToReturn.Add(arrayString[i]);
-            }
-            return listToReturn;
-        }
-
-        private List<string> LoadEnglishTop3000Words()
-        {
-            string path = "/words/words_en_known.txt";
-            var wordTrDirr = AppDomain.CurrentDomain.BaseDirectory + path;
-            Console.WriteLine(wordTrDirr);
-            string[] lines = File.ReadAllLines(wordTrDirr);
-
-            Console.WriteLine("lines:" + lines.Length);
-            List<string> listToReturn = new List<string>();
-            for (int i = 0; i < lines.Length; i++)
-            {
-                if (lines[i].Length >= 4 && lines[i].Length <= 6)
-                {
-                    listToReturn.Add(lines[i].ToUpper(System.Globalization.CultureInfo.InvariantCulture));
-                }
-            }
-            return listToReturn;
-        }
-
         private HashSet<string> LoadWords(string path)
         {
             var wordTrDirr = AppDomain.CurrentDomain.BaseDirectory + path;
