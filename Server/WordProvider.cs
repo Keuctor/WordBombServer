@@ -29,6 +29,8 @@ namespace WordBombServer.Server
 
         static List<Language> languages = new List<Language>();
 
+        public HashSet<string> additional_always_valid_words = new HashSet<string>();
+
         public void LoadWords()
         {
 
@@ -99,6 +101,17 @@ namespace WordBombServer.Server
                     }
                 }
             }
+
+
+            additional_always_valid_words.Add("CIROLUIS");
+            additional_always_valid_words.Add("CIRO");
+            additional_always_valid_words.Add("CATTALOS");
+            additional_always_valid_words.Add("CATTA");
+            additional_always_valid_words.Add("JEAN");
+            additional_always_valid_words.Add("JEAO");
+            additional_always_valid_words.Add("HEUCTOR");
+            additional_always_valid_words.Add("KEUCTOR");
+            additional_always_valid_words.Add("KEU");
         }
 
         public Language GetLanguage(byte language)
@@ -112,12 +125,14 @@ namespace WordBombServer.Server
             return null;
         }
 
+
         public bool HasWord(byte language, string word)
         {
+            if (additional_always_valid_words.Contains(word))
+                return true;
+
             return GetLanguage(language).Words.Contains(word);
         }
-
-
 
         public string GetRandomLetters(int minLength, int maxLength, byte language)
         {
